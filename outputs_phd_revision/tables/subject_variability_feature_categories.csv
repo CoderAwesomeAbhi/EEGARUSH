@@ -1,0 +1,13 @@
+,n_features,mean_abs_corr,max_abs_corr,n_sig
+spectral_entropy,21.0,0.1571,0.2907,0.0
+statistical,105.0,0.259,0.5018,0.0
+ratio,63.0,0.2287,0.3983,0.0
+hemisphere_bandpower,15.0,0.3554,0.5592,0.0
+bandpower,210.0,0.2757,0.5708,0.0
+global_bandpower,20.0,0.1705,0.5064,0.0
+hjorth,63.0,0.2803,0.6115,0.0
+shape,42.0,0.1995,0.5556,0.0
+entropy,21.0,0.1502,0.2696,0.0
+connectivity,210.0,0.1427,0.4928,0.0
+global_connectivity,5.0,0.0842,0.1488,0.0
+regional_bandpower,30.0,0.301,0.5541,0.0

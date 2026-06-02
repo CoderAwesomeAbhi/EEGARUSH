@@ -1,0 +1,296 @@
+use the non-standard covariance recon-
+struction is not expected to capture the spectral features (theta/alpha ratios, Hjorth parameters)
+that drive workload classication.
+A proper Riemannian analysis using the pyRiemann library
+directly on raw EEG epochs is needed for a denitive test.
+4
+Discussion
+This study provides the rst three-dataset replication of frontal theta increases during arithmetic
+under strict subject-wise validation. The nding replicates across 102 participants, two dierent
+EEG hardware systems (research-grade 19-channel and consumer 14-channel), three sampling rates,
+and two task designs (rest-vs-arithmetic and graded arithmetic diculty). The eect size (Cohen's
+d=0.84 for frontal theta) is comparable to the d=0.78 reported by Klimesch [1] for theta power
+during memory tasks and exceeds the d=0.62 observed by Sridhar et al. [3] in cross-task replication,
+placing it in the large range by neuroscientic standards.
+4.1
+Biological Interpretation
+The frontal theta increase during arithmetic is consistent with the fronto-hippocampal theta rhythm
+proposed by Klimesch [1], who reported that theta power increases of 2040% during memory
+encoding are robust across recording sites and task modalities.
+Our nding of a 57% increase
+in frontal theta during arithmetic (from 0.47 to 0.74 µV2) aligns with the upper bound of this
+range. Gevins et al. [2] reported similar frontal midline theta increases during working memory
+tasks, with eect sizes that scaled with task diculty  a pattern we reproduce using the graded
+diculty contrast in DS007262. Sridhar et al. [3] demonstrated that theta/alpha ratio generalizes
+across working memory and mental arithmetic tasks, with AUC values of 0.700.80 for within-task
+classication  consistent with our within-dataset LOSO range of 0.780.85.
+Frontal theta is thought to reect coordinated activity in the anterior cingulate cortex and
+prefrontal regions engaged during cognitive control [23], who reported that mid-frontal theta is
+modulated by both cognitive control demands (Cohen's d=0.71, meta-analysis across 122 studies)
+and anxiety. The concurrent alpha suppression likely reects thalamo-cortical disinhibition, enabling
+cortical processing in task-relevant regions [1]. That the theta/alpha ratio emerges as the single
+most discriminative feature across all datasets supports Sridhar et al. [3]'s conclusion that this ratio
+captures the balance of cognitive engagement (theta) and cortical idling (alpha) more eectively
+than either band alone.
+Our exploratory analysis of theta-gamma phase-amplitude coupling found robust coupling during
+both rest and arithmetic (surrogate-normalized Z = 11.2), but no signicant task-related modula-
+tion after proper subject-level averaging with surrogate testing. This diers from intracranial nd-
+ings of task-modulated PAC [27,29] and may reect the substantial attenuation of phase-amplitude
+relationships at the scalp level due to volume conduction [28], or a true absence of workload-specic
+19
+PAC modulation in scalp EEG. The small MI values (0.0010.002) and the presence of coupling
+in both conditions suggest that theta-gamma PAC is a general property of ongoing EEG activity
+rather than a specic marker of cognitive engagement. A properly powered study with dedicated
+PAC-optimized recordings and a causal manipulation (tACS, as outlined in Future Directions) is
+needed to resolve this question.
+The distinction between workload, mental fatigue, and anxiety is important because all three
+modulate overlapping EEG signatures. Borghini et al. [22] showed that prolonged cognitive task
+performance produces theta increases and alpha decreases similar to those we observe, and Cavanagh
+and Shackman [23] documented anxiety-related theta augmentation.
+Our multi-dataset design
+partially addresses this confound by including datasets with dierent task durations and designs:
+the MAT dataset uses short arithmetic blocks (<5 minutes), STEW uses interleaved trials, and
+DS007262 uses brief discrete events. The consistency of the theta eect across these designs argues
+against a pure fatigue or anxiety explanation. However, we cannot fully dissociate these constructs
+without subjective workload and fatigue ratings (NASA-TLX [16]), physiological measures (heart
+rate variability, pupil dilation), or a task manipulation that independently varies workload and
+arousal. A denitive dissociation requires an experiment where workload, fatigue, and anxiety are
+independently manipulated within subjectsa design none of the three datasets support.
+This
+limitation is shared with the broader EEG workload literature.
+4.2
+Comparison to Prior MAT Studies
+Previous analyses of the PhysioNet MAT dataset reported substantially higher accuracy than our
+LOSO results. Hakimi et al. [7] achieved 91.7% accuracy using convolutional neural networks with
+subject-dependent splits  approximately 21 points higher than our subject-wise SVM (71.0%) on
+the 10-channel intersection. Nguyen and Huynh [18] reported 85.7% F1 using KNN with random-
+window validation. These discrepancies are consistent with the data leakage documented by Lotte
+et al. [5]: when the same subject's windows appear in both training and test sets, the classier
+can learn subject-specic recording artifacts rather than task-general neural signals. Our LOSO
+approach, by contrast, estimates how well the model generalizes to an entirely unseen participant,
+which is the relevant metric for real-world BCI and humanmachine interaction applications. Even
+with the full 805-feature set, our MAT LOSO AUC of 0.796 is substantially lower than prior reports
+using subject-dependent splits, underscoring the importance of strict subject-wise validation.
+4.3
+Methodological Contributions
+The multi-dataset replication framework addresses a critical gap in EEG workload research. Within-
+dataset LOSO performance varied substantially across datasets: STEW (consumer 14-channel Emo-
+tiv) yielded AUC 0.800, while DS007262 (research-grade 19-channel) yielded chance-level AUC 0.467
+with the 10-channel intersection. This counterintuitive result suggests that dataset characteristics
+ task design, class balance, and recording consistency  aect classication performance more
+strongly than hardware quality. STEW's superior performance likely reects its balanced classes
+20
+(50% workload) and within-subject trial structure, which reduces subject-identity leakage compared
+to MAT's blocked design (25% workload class).
+Cross-dataset near-transfer for full models was at chance levels (AUC 0.470.51), demonstrat-
+ing that the 10-channel common feature set is insucient for dataset-independent classication by
+standard classiers. However, SNWA signicantly generalized to DS007262 (AUC 0.618, p=0.005),
+indicating that subject-normalized feature selection captures individual-level workload modulation
+that survives cross-dataset recording dierences. This is methodologically important: it suggests
+that normalizing out subject-level baseline variation  rather than relying on raw feature values  is
+the key to discovering transferable EEG signals. The channel intersection approach, while necessary
+for cross-dataset comparison, discards informative channels (Fz, Cz) that carry generalizable signal,
+as shown by the gap between full-feature MAT (AUC 0.796) and intersection-reduced MAT (AUC
+0.709). Multiple transfer confounders contribute: electrode congurations, task designs, popula-
+tions, and instruction dierences. Disentangling these factors would require prospective multi-site
+collection with a standardized protocol.
+SNWA's ability to approach full-model performance with 8 interpretable features on the full
+feature set (AUC 0.761 vs 0.796) and to generalize to an unseen dataset has practical implications.
+A system that needs only frontal theta/alpha ratio, relative theta, and Hjorth mobility from 8
+channels can run on low-cost hardware, potentially enabling real-time cognitive state estimation in
+educational or assistive contexts.
+4.4
+Limitations
+Seven limitations merit explicit discussion. First, the three datasets use dierent reference electrodes
+(MAT: unspecied online reference; STEW: Emotiv CMS/DRL active reference; DS007262: linked
+ears). Absolute bandpower valuesand thus bandpower ratiosare reference-dependent [1]. While
+we replicated frontal theta increases across all three datasets, the specic numerical values (e.g.,
+d=0.84 for frontal theta) should be interpreted with this caveat. Re-referencing to REST or average
+reference would strengthen cross-dataset comparability and is recommended for future multi-dataset
+analyses.
+Second, per-subject variability is high: 8% of MAT participants had AUC below 0.6, and per-
+subject AUC ranged from 0.34 to 1.00. Our exploratory resting-EEG prediction model did not
+reach signicance (Spearman ρ = 0.32, p = 0.054, MAT LOOCV), and no individual resting feature
+survived FDR correction in MAT. Only one feature survived FDR correction in STEW (occipital
+theta, q = 0.005). The consistent predictor direction across datasets is suggestive but does not
+constitute formal replication. A properly powered prospective study (N≥200) with pre-registered
+predictors is needed before clinical screening recommendations can be made. The 810% resistant-
+subject rate is consistent with the 20% estimate from Baldwin et al. [21], though the lower bound
+may reect our lenient AUC>0.6 threshold versus their within-subject criterion.
+Third, from a clinical utility perspective, the best-performing model (STEW AUC 0.800) achieves
+this at a default probability threshold of 0.5. At clinically meaningful operating points90% sen-
+21
+sitivity or 90% specicitythe false positive or false negative rates would be considerably higher.
+For safety-critical applications (e.g., air trac control monitoring), a false negative rate above 10%
+is typically unacceptable. Our classiers do not meet this benchmark: at 90% sensitivity, specicity
+drops to approximately 60%. Decision curve analysis and net-benet calculations are needed before
+any clinical deployment recommendation can be made.
+Fourth, cross-dataset transfer for full models was at chance (AUC 0.470.51). SNWA achieved
+signicant transfer (AUC 0.618, p = 0.005) but requires a baseline recording from each target
+subjectthis is within-subject normalization at test time, not true zero-shot transfer. The distinc-
+tion between these two claims is important: the negative full-model result shows that EEG workload
+features are highly domain-specic, while SNWA's success demonstrates that subject-normalized
+features capture some cross-dataset signal.
+Fifth, this is a secondary analysis of existing public data (N≤48 per dataset). Prospective collec-
+tion with standardized protocols across multiple sites and N≥200 per dataset would provide stronger
+evidence. Sixth, overlapping EEG windows (4 s, 50% overlap) introduce temporal correlation that
+inates the eective sample size; our subject-level bootstrap partially addresses this by resampling
+subjects rather than windows [5]. Seventh, the 8-channel intersection discards informative channels
+(Fz, Cz) that carry workload information [2]. The gap between full-feature MAT (AUC 0.796) and
+intersection-reduced MAT (AUC 0.709) conrms this cost; ICA did not bridge the gap (AUC 0.753),
+conrming the cost is due to channel coverage.
+4.5
+Future Directions
+The results suggest several concrete next steps. First, a properly powered prospective study (N≥200
+per dataset, standardized 10-20 montage, average reference, pre-registered analysis plan) is needed to
+establish EEG workload classication benchmarks. Such a study should include subjective workload
+ratings (NASA-TLX) and physiological co-registration (HRV, pupillometry) to dissociate workload
+from anxiety and fatiguea confound the current datasets cannot resolve.
+Second, domain adaptation methods remain promising for cross-dataset transfer. Our Rieman-
+nian geometry analysis was limited by a non-standard feature-derived covariance reconstruction;
+proper Riemannian analysis using pyRiemann on raw EEG epochs, as well as subspace alignment [6]
+and CORAL, should be tested with the full channel sets.
+Third, the presence of theta-gamma coupling in both conditionswithout task modulation
+warrants further investigation.
+A preregistered tACS experiment (6 Hz frontal, F3/F4, 2 mA,
+sham-controlled crossover, N=40) could test whether induced theta oscillations causally modulate
+PAC and arithmetic performance, potentially revealing a task-specic coupling eect that our cor-
+relational analysis was underpowered to detect.
+Fourth, closed-loop experiments where task diculty adapts to real-time theta power could
+establish causal relationships between theta oscillations and cognitive performance. Finally, clinical
+populations with attentional decits (ADHD, mild cognitive impairment) may show altered theta
+dynamics, providing a physiological biomarker.
+22
+5
+Ethics Statement
+This work is a secondary analysis of publicly available, de-identied EEG datasets.
+No new
+human-subject data were collected.
+All original datasets were collected with informed consent
+under their respective institutional review board approvals.
+The PhysioNet EEGMAT dataset
+(doi:10.13026/C2JQ1P) was collected under ethics approval from the Institute of Neurology, Psy-
+chiatry and Narcology of the National Academy of Medical Sciences of Ukraine. The STEW dataset
+was approved by the Nanyang Technological University Institutional Review Board. OpenNeuro
+DS007262 (doi:10.18112/openneuro.ds007262.v1.0.6) was approved by local ethics committees at its
+originating institution. As secondary analysis of de-identied public data, this work does not require
+separate IRB approval under 45 CFR 46.104(d)(4). The results are intended for basic neuroscience
+and computational methodology, not clinical diagnosis, medical-device development, or individual
+cognitive assessment. Data use complies with the original datasets' terms of use.
+6
+Data and Code Availability
+The original raw datasets are publicly available from: PhysioNet EEGMAT at https://doi.org/
+10.13026/C2JQ1P [10], STEW at https://huggingface.co/datasets/stew [11], and OpenNeuro
+DS007262 at https://doi.org/10.18112/openneuro.ds007262.v1.0.6 [12].
+The derived fea-
+ture table (SHA-256: A240EB2080E0BB8422C61856305673FD4D6ACBAC828228AED6C62BFE4CB0142D)
+is included in the repository at outputs_reproduced/features/eeg_features.csv. All analysis
+code is at https://github.com/agangarapu/eeg-workload-replication. Tables, gures, and re-
+producibility reports are under outputs/, outputs_phd_revision/, and results/multi_dataset/.
+Paper source (LaTeX) is in paper/.
+A requirements.txt with pinned package versions and a
+Makefile for full reproduction are in the repository root. The repository also includes SHA-256
+checksums for all output les (SHA256SUMS.txt).
+7
+Acknowledgments
+The author thanks the creators of the PhysioNet EEGMAT, STEW, and OpenNeuro DS007262
+datasets for making their data publicly available. Computational resources were provided by the
+author's personal computing infrastructure. No external funding was received for this work.
+8
+Author Contributions
+Abhijay Gangarapu designed the analysis, implemented the code, ran all analyses, interpreted re-
+sults, and prepared the manuscript.
+23
+9
+Competing Interests
+The author declares no competing interests. The author has no nancial relationship with any
+EEG hardware company (Emotiv, g.tec, BrainProducts, etc.), no relationship with PhysioNet,
+OpenNeuro, or STEW data providers, and no plans to commercialize SNWA.
+References
+[1] Klimesch W. EEG alpha and theta oscillations reect cognitive and memory performance: a
+review and analysis. Brain Research Reviews. 1999;29(23):169195.
+[2] Gevins A, Smith ME, McEvoy L, Yu D. High-resolution EEG mapping of cortical activation
+related to working memory: eects of task diculty, type of processing, and practice. Cerebral
+Cortex. 1997;7(4):374385.
+[3] Sridhar S, Manian V, Rao RPN. Theta and alpha ratios as objective correlates of cognitive
+workload: a cross-task replication study. Journal of Neural Engineering. 2022;19(4):046033.
+[4] Zyma
+I,
+Tukaev
+S,
+Seleznov
+I,
+Kiyono
+K,
+Popov
+A,
+Chernykh
+M,
+Shpenkov
+O.
+Electroencephalograms during Mental Arithmetic Task Performance. Data. 2019;4(1):14.
+doi:10.3390/data4010014.
+[5] Lotte F, Bougrain L, Cichocki A, Clerc M, Congedo M, Rakotomamonjy A, Yger F. A review of
+classication algorithms for EEG-based braincomputer interfaces: a 10 year update. Journal
+of Neural Engineering. 2018;15(3):031005.
+[6] Jayaram V, Alamgir M, Altun Y, Scholkopf B, Grosse-Wentrup M. Transfer learning in brain-
+computer interfaces. IEEE Computational Intelligence Magazine. 2016;11(1):2031.
+[7] Hakimi N, Jodeiri A, Setarehdan SK. Mental arithmetic task classication using convolutional
+neural networks on EEG signals. Biomedical Signal Processing and Control. 2023;79:104156.
+[8] Roy RN, Charbonnier S, Campagne A, Bonnet S. Ecient mental workload estimation using
+task-independent EEG features. Journal of Neural Engineering. 2016;13(2):026019.
+[9] Jebelli H, Hwang S, Lee S. EEG-based workers' mental workload classication using deep learn-
+ing. Automation in Construction. 2019;106:102876.
+[10] Zyma I, Tukaev S, Seleznov I, Kiyono K, Popov A, Chernykh M, Shpenkov O. EEG During
+Mental Arithmetic Tasks [Dataset]. PhysioNet. 2019. https://doi.org/10.13026/C2JQ1P.
+[11] Lim WL, Sourina O, Wang LP. STEW: Simultaneous task EEG workload data set. IEEE
+Transactions on Neural Systems and Rehabilitation Engineering. 2018;26(11):21062114. https:
+//doi.org/10.1109/TNSRE.2018.2872924.
+24
+[12] Barras M, Booth L. Cognitive Workload 8-level Arithmetic Task. OpenNeuro DS007262. 2026.
+https://doi.org/10.18112/openneuro.ds007262.v1.0.6.
+[13] Gramfort A, Luessi M, Larson E, Engemann DA, Strohmeier D, Brodbeck C, Goj R, Jas
+M, Brooks T, Parkkonen L, Hamalainen M. MEG and EEG data analysis with MNE-Python.
+Frontiers in Neuroscience. 2013;7:267.
+[14] Pedregosa F, Varoquaux G, Gramfort A, Michel V, Thirion B, Grisel O, Blondel M, Pretten-
+hofer P, Weiss R, Dubourg V, Vanderplas J, Passos A, Cournapeau D, Brucher M, Perrot M,
+Duchesnay E. Scikit-learn: Machine learning in Python. Journal of Machine Learning Research.
+2011;12:28252830.
+[15] Sweller J. Cognitive load during problem solving:
+eects on learning. Cognitive Science.
+1988;12(2):257285.
+[16] Hart SG, Staveland LE. Development of NASA-TLX (Task Load Index): results of empirical
+and theoretical research. Advances in Psychology. 1988;52:139183.
+[17] Zander TO, Kothe C. Towards passive braincomputer interfaces: applying braincomputer
+interface technology to humanmachine systems in general. Journal of Neural Engineering.
+2011;8(2):025005.
+[18] Nguyen PK, Huynh QL. A machine learning approach in EEG-based assessment of cognitive
+load by mental arithmetic tasks. Journal of Physics: Conference Series. 2025;2949:012004.
+[19] Vidaurre C, Sannelli C, Muller KR, Blankertz B. Co-adaptive calibration to improve BCI
+performance. NeuroImage. 2011;55(4):14431456.
+[20] Congedo M, Barachant A, Bhatia A. Riemannian geometry for EEG-based braincomputer
+interfaces: a primer and a review. BrainComputer Interfaces. 2017;4(3):155174.
+[21] Baldwin CL, Penaranda BN. Adaptive training using an articial neural network and EEG
+metrics for within- and cross-task workload classication. NeuroImage. 2013;59(1):4856.
+[22] Borghini G, Astol L, Vecchiato G, Mattia D, Babiloni F. Measuring neurophysiological signals
+in aircraft pilots and car drivers for the assessment of mental workload, fatigue and drowsiness.
+Neuroscience & Biobehavioral Reviews. 2014;44:5875.
+[23] Cavanagh JF, Shackman AJ. Frontal midline theta reects anxiety and cognitive control: a
+meta-analytic review. Journal of Physiology-Paris. 2014;108(46):251258.
+[24] Goldberger AL, Amaral LAN, Glass L, Hausdor JM, Ivanov PC, Mark RG, Mietus JE, Moody
+GB, Peng CK, Stanley HE. PhysioBank, PhysioToolkit, and PhysioNet: Components of a new
+research resource for complex physiologic signals. Circulation. 2000;101(23):e215e220.
+25
+[25] Wong B. Points of view: Color blindness. Nature Methods. 2011;8(6):441. https://doi.org/
+10.1038/nmeth.1618.
+[26] Zanini P, Congedo M, Jutten C, Said S, Berthoumieu Y. Transfer learning: a Riemannian geom-
+etry framework with applications to braincomputer interfaces. IEEE Transactions on Biomed-
+ical Engineering. 2018;65(5):11071116.
+[27] Lisman JE, Jensen O. The thetagamma neural code. Neuron. 2013;77(6):10021016.
+[28] Tort ABL, Komorowski R, Eichenbaum H, Kopell N. Measuring phase-amplitude cou-
+pling between neuronal oscillations of dierent frequencies. Journal of Neurophysiology.
+2010;104(2):11951210.
+[29] Canolty RT, Edwards E, Dalal SS, Soltani M, Nagarajan SS, Kirsch HE, Berger MS, Barbaro
+NM, Knight RT. High gamma power is phase-locked to theta oscillations in human neocortex.
+Science. 2006;313(5793):16261628.
+26

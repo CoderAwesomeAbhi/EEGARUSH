@@ -1,0 +1,8 @@
+family,total_top20_appearances,unique_features,folds_with_family
+relative_bandpower,169,12,36
+time_domain_morphology,162,20,36
+spectral_absolute_bandpower,151,15,36
+band_ratios,107,6,35
+regional_hemispheric_summaries,89,7,36
+hjorth,41,6,36
+connectivity_correlation,1,1,1

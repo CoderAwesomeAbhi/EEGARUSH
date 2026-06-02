@@ -1,0 +1,6 @@
+feature_type,mat_n,stew_n,mat_mean_abs_rho,stew_mean_abs_rho,mat_max_abs_rho,stew_max_abs_rho,mat_n_sig,stew_n_sig
+hjorth,63,42,0.1746,0.1376,0.3905,0.3686,10,3
+bandpower,0,0,0.0,0.0,0.0,0.0,0,0
+ratio,63,42,0.2627,0.1992,0.4909,0.4416,28,17
+statistical,0,0,0.0,0.0,0.0,0.0,0,0
+connectivity,5,0,0.2508,0.0,0.329,0.0,0,0

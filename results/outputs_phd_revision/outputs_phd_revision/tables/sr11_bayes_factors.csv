@@ -1,0 +1,2 @@
+model,n_subjects,mean_auc,t_statistic,bf10
+LogisticRegression,36,0.4990330909916241,-0.10090506038837603,1.226643364455124

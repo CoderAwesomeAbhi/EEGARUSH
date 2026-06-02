@@ -1,0 +1,14 @@
+1.0.6 2026-02-24
+  - not updating doi
+1.0.5 2026-02-24
+  - back to first before scientific data submission
+1.0.4 2026-01-28
+  - DOI unchanged
+1.0.3 2026-01-28
+  - reorder authos again, first author should be first but openneuro recommends second?
+1.0.2 2026-01-19
+  - fixed higher level override warnings
+1.0.1 2026-01-18
+  - Updated author order
+1.0.0 2026-01-18
+  - 1.0.0

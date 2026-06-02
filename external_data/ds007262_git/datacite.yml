@@ -1,0 +1,27 @@
+data:
+  attributes:
+    types:
+      resourceTypeGeneral: Dataset
+    contributors:
+      - name: Liam Booth
+        givenName: ''
+        familyName: ''
+        nameType: Personal
+        nameIdentifiers: []
+        contributorType: ProjectLeader
+        order: 1
+      - name: Matthew Barras
+        givenName: ''
+        familyName: ''
+        nameType: Personal
+        nameIdentifiers: []
+        contributorType: Researcher
+        order: 2
+    creators:
+      - name: Liam Booth
+        nameType: Personal
+      - name: Matthew Barras
+        nameType: Personal
+    descriptions:
+      - description: N/A
+        descriptionType: Abstract

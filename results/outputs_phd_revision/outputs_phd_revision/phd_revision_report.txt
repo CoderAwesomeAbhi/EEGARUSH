@@ -1,0 +1,95 @@
+Repository root: /content
+========================================================================
+PhD Revision Test Suite — 2026-05-29 01:23
+Seed=42, Bootstrap=2000, Permutation=1000
+========================================================================
+
+[0] Loading data ...
+  WARNING: feature table not found. Using synthetic data.
+  Subjects: 36, Windows: 4267, Features: 805, Class balance: [2103 2164]
+  WARNING: predictions_loso.csv not found, returning empty DataFrame
+  Predictions not found. Running LOSO LogisticRegression from scratch...
+  Computed LOSO predictions: 4267 rows
+  WARNING: table_snwa_loso_predictions.csv not found, returning empty DataFrame
+  SNWA predictions not found. Using LOSO LR as proxy for SNWA...
+  WARNING: table_ablation_loso_predictions.csv not found, returning empty DataFrame
+  Ablation predictions not found. Using LOSO LR as proxy...
+  WARNING: table_independent_loso_recheck_predictions.csv not found, returning empty DataFrame
+  WARNING: table_subject_level_reliability.csv not found, returning empty DataFrame
+  WARNING: subject_level_reliability.csv not found, returning empty DataFrame
+  WARNING: table_calibration_metrics.csv not found, returning empty DataFrame
+  WARNING: table_permutation_tests.csv not found, returning empty DataFrame
+
+[1] CF2: Subject-level bootstrap confidence intervals ...
+  WARNING: No predictions for SVM_RBF, skipping
+  LogisticRegression: ROC-AUC=0.499 [0.484, 0.513]  F1=0.512 [0.495, 0.529]  (subject bootstrap, N=36)
+  SNWA_K8: ROC-AUC=0.499 [0.484, 0.513]  F1=0.512 [0.495, 0.529]  (subject bootstrap, N=36)
+
+[2] CF3: Permutation null (1000 repeats) ...
+  Running permutation test with 200 repeats (time-limited)...
+    Permutation 20/200 (69s elapsed, ~619s remaining)
+    Permutation 40/200 (137s elapsed, ~547s remaining)
+    Permutation 60/200 (205s elapsed, ~478s remaining)
+    Permutation 80/200 (272s elapsed, ~409s remaining)
+    Permutation 100/200 (339s elapsed, ~339s remaining)
+    Permutation 120/200 (406s elapsed, ~271s remaining)
+    Permutation 140/200 (474s elapsed, ~203s remaining)
+    Permutation 160/200 (540s elapsed, ~135s remaining)
+    Permutation 180/200 (606s elapsed, ~67s remaining)
+    Permutation 200/200 (673s elapsed, ~0s remaining)
+  LOSO Logistic Regression: obs_auc=0.499, null_mean=0.498, p=0.4975 (n_perm=200)
+  Cohen's d=0.038, 95% CI=[-0.103, 0.177]
+
+[3] SR1: DeLong pairwise ROC-AUC comparisons ...
+
+[4] SR2: Paired Wilcoxon on per-subject AUCs ...
+
+[5] SR4: McNemar's test (SVM vs SNWA) ...
+
+[6] SR5: Benjamini-Hochberg FDR correction ...
+  WARNING: table_fdr_feature_statistics.csv not found, returning empty DataFrame
+
+[7] SR6: Statistical power analysis ...
+  AUC=0.55: power=1.000 (N_subjects=36)
+  AUC=0.60: power=1.000 (N_subjects=36)
+  AUC=0.65: power=1.000 (N_subjects=36)
+  AUC=0.70: power=1.000 (N_subjects=36)
+  AUC=0.75: power=1.000 (N_subjects=36)
+  AUC=0.80: power=1.000 (N_subjects=36)
+  AUC=0.85: power=1.000 (N_subjects=36)
+
+[8] SR7: Brier Skill Score ...
+  LogisticRegression: Brier=0.3077, BSS=-0.2310
+  SNWA_K8: Brier=0.3077, BSS=-0.2310
+
+[9] SR8: Calibration curves with confidence bands ...
+  Calibration figure saved: calibration_confidence_bands.png
+
+[10] SR9: External validation t-test (DS007262) ...
+
+[11] SR10: Connectivity equivalence test ...
+  Connectivity features: 0, Other: 805
+
+[12] SR11: Bayes Factor (BF10) analysis ...
+  LogisticRegression: BF10=1.23 (N=36, mean AUC=0.499)
+
+[13] SR12: Expected Calibration Error (all models) ...
+  LogisticRegression: ECE=0.2007 [0.1864, 0.2174]
+  SNWA_K8: ECE=0.2007 [0.1865, 0.2192]
+
+[14] MV4: Learning curve ...
+
+[15] MV9: Combined ROC with confidence bands ...
+  Combined ROC saved: combined_roc_confidence.png
+
+[16] FT4: Subject-level AUC scatter (SVM vs SNWA) ...
+
+[17] FE6: VIF analysis on top features ...
+  VIF (top 100 features): 0 features have VIF>10
+
+[18] EV8: Per-subject AUC distribution (DS007262) ...
+
+========================================================================
+Total runtime: 928.7s (15.5 min)
+Platform: Linux-6.6.122+-x86_64-with-glibc2.35
+Python: 3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]

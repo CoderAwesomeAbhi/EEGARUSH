@@ -1,0 +1,2 @@
+condition,overall_auc,auc_mean,auc_std,n_resistant,ci_low,ci_high
+"['No ICA', 'ICA (per-subject)']","[0.7625, 0.7534]","[np.float64(0.828), np.float64(0.8111)]","[np.float64(0.1601), np.float64(0.1795)]","[3, 4]","[np.float64(0.7755), np.float64(0.7504)]","[np.float64(0.8782), np.float64(0.8653)]"

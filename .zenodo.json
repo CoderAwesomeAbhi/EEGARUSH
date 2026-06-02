@@ -1,0 +1,9 @@
+{
+    "title": "Frontal Theta Oscillations Predict Arithmetic Performance: A Multi-Dataset Replication Across 102 Participants with Strict Subject-Wise Validation",
+    "description": "Reproducible multi-dataset EEG analysis of cognitive workload classification across PhysioNet MAT (N=36), STEW (N=48), and OpenNeuro DS007262 (N=18). Includes full feature extraction pipeline, SNWA interpretable model, PhD-level statistical audit, and all generated tables/figures.",
+    "creators": [{"name": "Abhijay Gangarapu", "affiliation": "Independent Researcher"}],
+    "keywords": ["EEG", "cognitive workload", "mental arithmetic", "machine learning", "brain-computer interface", "theta oscillations", "cross-dataset replication"],
+    "license": "MIT",
+    "upload_type": "software",
+    "access_right": "open"
+}

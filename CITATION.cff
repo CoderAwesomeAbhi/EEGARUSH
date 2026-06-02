@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the software and the original PhysioNet EEGMAT dataset."
+title: "EEG Cognitive State Classification from Mental Arithmetic Workload"
+type: software
+authors:
+  - family-names: Gangarapu
+    given-names: Abhijay
+repository-code: "https://github.com/CoderAwesomeAbhi/hjhi04970-source"
+license: MIT
+version: "0.1.0"
+date-released: "2026-05-27"
+references:
+  - type: dataset
+    authors:
+      - family-names: Zyma
+        given-names: Igor
+      - family-names: Seleznov
+        given-names: Ivan
+      - family-names: Popov
+        given-names: Anton
+      - family-names: Chernykh
+        given-names: Mariia
+      - family-names: Shpenkov
+        given-names: Oleksii
+    title: "EEG During Mental Arithmetic Tasks"
+    doi: "10.13026/C2JQ1P"
+    year: 2018

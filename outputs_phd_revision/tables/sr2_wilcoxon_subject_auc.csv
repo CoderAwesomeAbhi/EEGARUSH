@@ -1,0 +1,2 @@
+label1,label2,n_subjects,mean_auc_1,mean_auc_2,mean_delta_auc,wilcoxon_W,wilcoxon_p
+SVM_RBF,SNWA_K8,36,0.8537130107381004,0.76288879115044,0.09082421958766045,203.0,0.040883880807086825

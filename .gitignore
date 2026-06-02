@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+data/raw/
+*.edf
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+outputs/synthetic_smoke_test/
+.ipynb_checkpoints/

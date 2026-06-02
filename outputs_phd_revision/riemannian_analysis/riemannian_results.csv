@@ -1,0 +1,2 @@
+method,mean_auc,std_auc,p_vs_baseline
+"['Baseline (805 features, MAT LOSO)', 'Riemannian Tangent (MAT LOSO)', 'Baseline (MAT->DS262 transfer)', 'Riemannian Original (MAT->DS262)', 'Riemannian Recentered (MAT->DS262)', 'Riemannian Pooled Mean (MAT->DS262)']","[np.float64(0.828), np.float64(0.7497), 0.4944, 0.5136, 0.5063, 0.5142]","[np.float64(0.1601), np.float64(0.2283), None, None, None, None]","[None, np.float64(0.0718), None, None, None, None]"

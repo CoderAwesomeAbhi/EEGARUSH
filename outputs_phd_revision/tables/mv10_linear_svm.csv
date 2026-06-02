@@ -1,0 +1,2 @@
+model,mean_auc,std_auc
+linear_svm,0.8195642706888226,0.1656595167848858

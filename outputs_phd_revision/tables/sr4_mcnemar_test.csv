@@ -1,0 +1,2 @@
+model_1,model_2,chi2_p,n_both_correct,n_svm_only_correct,n_snwa_only_correct,n_both_wrong
+SVM_RBF,SNWA_K8,0.27725880177678985,2440,691,733,402

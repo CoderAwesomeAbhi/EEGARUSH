@@ -1,0 +1,5 @@
+control,model,n_repeats,mean_auc,std_auc,max_auc,real_best_auc,subject_id_accuracy,chance_subject_id_accuracy
+permute_labels_within_training_subject,logistic_regression,3,0.49475449109917613,0.039509734087471896,0.5398334147078654,0.795994774592546,,
+circular_shift_training_labels,logistic_regression,3,0.4567274456921873,0.04780045161173567,0.5115153681616331,0.795994774592546,,
+gaussian_features,logistic_regression,3,0.49739775871288733,0.01779386503951029,0.517238613377973,0.795994774592546,,
+subject_id_prediction_random_window_split,logistic_regression_multiclass,1,,,,0.795994774592546,0.9962511715089035,0.027777777777777776
