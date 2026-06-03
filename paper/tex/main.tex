@@ -26,8 +26,8 @@
 
 \title{\textbf{Subject-Normalized EEG Workload Decoding Reveals an Invariant Cognitive-Effort Axis Constrained by Individual Sensor-Space Geometry}}
 
-\author[1]{Abhijay Gangarapu\thanks{$^{\ast}$These authors contributed equally to this work.}}
-\author[1]{Arush Ravipati\footnotemark[1]}
+\author[1]{Abhijay Gangarapu$^{\ast}$}
+\author[1]{Arush Ravipati$^{\ast}$}
 \affil[1]{Independent Researcher}
 
 \date{June 2026}
@@ -35,6 +35,10 @@
 \begin{document}
 
 \maketitle
+\begingroup
+\renewcommand{\thefootnote}{}
+\footnotetext{$^{\ast}$These authors contributed equally to this work.}
+\endgroup
 
 \begin{abstract}
 EEG markers of cognitive workload often appear highly predictive under
@@ -55,14 +59,9 @@ in all three datasets (d=0.84, $p<0.001$), consistent with frontoparietal
 control and thalamocortical gating under higher effort. A subject-normalized
 8-feature workload axis (SNWA) approached full-model performance (AUC 0.761
 vs 0.796, $p=0.15$) and generalized to DS007262 (AUC 0.618, $p=0.005$) where
-full sensor-space models failed. Fixed-band theta-gamma phase-amplitude
-coupling was present during both conditions (surrogate $Z=11.2$), but group
-task modulation did not survive subject-level averaging, highlighting the
-limits of non-individualized sensor-space coupling analysis. Exploratory
-resting EEG correlates of classifiability (MAT Hjorth complexity
-$\rho=-0.61$, uncorrected $p=7.4\times10^{-5}$; STEW occipital theta
-$\rho=-0.59$, FDR $q=0.005$) suggest that baseline neural entropy and network
-state constrain task-induced separability. These results recast EEG workload
+full sensor-space models failed. Exploratory resting EEG analyses suggest
+that baseline variance constrains subject-level classifiability, but these
+signals remain underpowered and hypothesis-generating. These results recast EEG workload
 decoding as an invariant-representation problem: generalization requires
 separating cognitive-effort dynamics from subject-specific sensor-space
 constraints.
@@ -97,20 +96,9 @@ by anatomy, neural noise, reference montage, and network organization.
 Zero-shot generalization fails when between-subject geometry is larger than
 the within-subject workload displacement.
 
-Theta oscillations may also coordinate faster local activity through
-cross-frequency coupling. In hippocampal and intracranial recordings, the
-phase of theta rhythms can modulate gamma-band (30--45~Hz) amplitude
-\cite{lisman2013, canolty2006, tort2010}, providing a candidate temporal
-scaffold for working-memory maintenance. Whether fixed-band scalp EEG
-theta-gamma phase-amplitude coupling (PAC) provides a transferable workload
-marker remains unresolved. PAC is highly sensitive to source mixing,
-individual peak frequencies, waveform shape, and band definitions, so a group
-average over fixed sensor-level bands may miss individualized task-modulated
-coupling even when cross-frequency coordination exists.
-
 Much of the EEG workload-decoding literature has treated generalization as a
 classifier-selection problem. Studies extract spectral power, Hjorth
-parameters, connectivity measures, and short-window coupling features, then
+parameters, and connectivity measures, then
 compare algorithms using random splits across windows. This validation scheme
 allows the same participant to appear in both training and test folds
 \cite{lotte2018}. Several PhysioNet MAT studies illustrate the issue: Hakimi
@@ -145,12 +133,11 @@ alpha suppression replicate across datasets under subject-wise validation?
 Second, do conventional sensor-level classifiers generalize to unseen
 participants and independent datasets? Third, does SNWA recover an
 interpretable workload axis that approaches full-model performance while
-transferring across datasets? Fourth, do fixed-frequency theta-gamma PAC and
-resting-state features reveal mechanistic constraints on workload
-classifiability? By moving from benchmark accuracy to representational
-invariance, this study asks which parts of the EEG workload signal survive the
-transition from subject-specific sensor coordinates to a shared cognitive
-effort axis.
+transferring across datasets? Fourth, what source-localization analysis is
+needed to connect the workload axis to cortical generators? By moving from
+benchmark accuracy to representational invariance, this study asks which
+parts of the EEG workload signal survive the transition from subject-specific
+sensor coordinates to a shared cognitive effort axis.
 
 \section{Materials and Methods}
 
@@ -365,25 +352,13 @@ separately via LOSO classification and equivalence testing against chance.
 Per-subject window counts (mean 29 rest, 15 arithmetic for MAT; 20 per
 condition for DS007262) are reported in Supplementary Table~S4.
 
-\subsection{Theta-Gamma Phase-Amplitude Coupling Analysis}
+\subsection{Source Localization}
 
-Theta-gamma PAC was computed on the MAT dataset (N=36, 72 EDF recordings,
-21-channel, 256~Hz, re-referenced to average). Theta phase (4--8~Hz) and
-gamma amplitude (30--45~Hz) envelopes were extracted via the Hilbert transform
-after 4th-order Butterworth bandpass filtering (zero-phase \texttt{filtfilt}).
-The Modulation Index (MI) of Tort et al.\ \cite{tort2010} was computed:
-MI = $(\log N - H(P)) / \log N$, across $N=18$ theta phase bins.
-To improve PAC reliability, within-condition recordings were concatenated
-per subject (mean 119~s per condition), and 200 time-shifted surrogates
-(amplitude time series circularly shifted by a random offset between
-25\%--75\% of the epoch length) were generated per channel to establish
-a per-subject null distribution. A comodulogram was computed at Fz
-(phase frequencies 2--14~Hz in 2~Hz steps, amplitude frequencies 20--50~Hz
-in 4~Hz steps) to verify the frequency specificity of the coupling.
-Paired t-tests (arithmetic vs.\ rest) were computed per channel, with
-Benjamin-Hochberg FDR correction across 10 channels (7 frontal: Fp1, Fp2,
-F3, F4, F7, F8, Fz; 3 central: C3, C4, Cz). Gamma amplitude was quantified
-as the mean Hilbert envelope in the 30--45~Hz band with identical procedures.
+Source localization will be performed on the MAT 19-channel recordings to
+estimate cortical generators of the theta/alpha workload axis.
+% TODO: Insert exact sLORETA/MNE inverse-modeling parameters here, including
+% head model, electrode montage, noise covariance, inverse method, source
+% space, regularization, frequency-band extraction, and statistical testing.
 
 \section{Results}
 
@@ -459,58 +434,14 @@ generalization in a graded-difficulty design. Dashed line: chance (AUC 0.5).}
 \label{fig:theta_boxplot}
 \end{figure}
 
-\subsection{Theta-Gamma Phase-Amplitude Coupling: Presence but Weak Task Modulation}
+\subsection{Cortical Generators of the Workload Axis}
 
-Theta-gamma PAC (Modulation Index, Tort et al.\ \cite{tort2010}) was computed
-on the MAT dataset using concatenated recordings per condition (mean 119~s
-per subject), with 200 time-shifted surrogates per channel to establish
-a per-subject null distribution. Theta-gamma coupling was robustly present
-during both rest and arithmetic: the mean surrogate-normalized $Z$-score
-across channels was 11.2 during arithmetic, indicating that MI values
-substantially exceed the surrogate null (Figure~\ref{fig:pac_results}C).
-A comodulogram at Fz confirmed that the coupling was maximal in the
-canonical theta--gamma frequency range (4--8~Hz phase, 30--45~Hz amplitude;
-Supplementary Figure~1).
-
-However, task-related modulation of PAC was not significant after proper
-subject-level averaging: no channel showed a significant rest-vs-arithmetic
-difference after FDR correction (all $p_{\text{FDR}} > 0.05$, paired $t$-test,
-N=36; Figure~\ref{fig:pac_results}A--B). Across 10 channels, Cohen's $d$
-ranged from $-0.21$ to $0.30$ (meta-analytic mean $d=0.07$, 90\% CI
-$[-0.02, 0.15]$). The 90\% CI falls within the equivalence bound of
-$d=\pm0.20$, indicating that the PAC task modulation is statistically
-equivalent to zero (TOST-consistent). Gamma amplitude (30--45~Hz) also
-showed no significant task modulation after FDR correction
-(Supplementary Table~1).
-
-This result should not be interpreted as evidence that cognitive workload
-lacks cross-frequency coordination. Rather, it identifies a boundary of the
-present fixed-band sensor-space representation. PAC estimates are sensitive
-to individual theta peaks, gamma-band definitions, source mixing, waveform
-shape, and reference montage. A group analysis that imposes a common 4--8~Hz
-phase band and 30--45~Hz amplitude band can therefore average away
-idiosyncratic but physiologically meaningful coupling. The difference between
-this finding and previous intracranial reports \cite{canolty2006, lisman2013}
-may reflect the substantial attenuation of phase-amplitude relationships at
-the scalp level due to volume conduction and signal mixing \cite{tort2010}.
-Replication with individualized peak-frequency alignment, longer recordings,
-and source-localized coupling estimates would be needed to determine whether
-task-related PAC modulation contributes to arithmetic workload dynamics.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.95\linewidth]{../figures/figure_pac_results.png}
-\caption{Theta-gamma phase-amplitude coupling on the MAT dataset (N=36,
-average reference, concatenated recordings, 200 time-shifted surrogates per
-channel). (A) MI during arithmetic by channel. (B) Paired rest-vs-arithmetic
-comparison: each point is one subject; gray lines connect paired conditions.
-No channel survived FDR correction for the rest-vs-arithmetic contrast
-($p_{\text{FDR}} > 0.05$, $N=36$, paired $t$-test). (C) Surrogate-normalized
-$Z$-score (difference from surrogate null in standard deviations); mean
-$Z = 11.2$ across channels, confirming robust PAC during both conditions.
-Error bars: $\pm$1 SEM.}
-\label{fig:pac_results}
-\end{figure}
+Inverse modeling will be used to test whether the theta/alpha workload axis
+localizes to medial frontal, anterior cingulate, or other control-network
+generators rather than remaining only a sensor-space effect.
+% TODO: Insert inverse-modeling findings here after source localization is run,
+% including cortical maps, source-level effect sizes, confidence intervals,
+% and multiple-comparison-corrected statistics.
 
 \subsection{Subject-Wise Classification Replicates Above Chance}
 
@@ -762,113 +693,16 @@ regression, gradient boosting, random forest, XGBoost), indicating that
 their poor performance reflects a genuine lack of discriminable EEG
 workload signal rather than a failure of a specific algorithm.
 
-\subsubsection{Exploratory Analysis: Resting EEG Predictors of Subject Classifiability}
-
-As an exploratory analysis, we tested whether resting-state EEG features
-could predict per-subject LOSO AUC. For each subject, we computed the mean
-and standard deviation of all 805 features across rest-condition windows
-(1,611 features per subject). Feature--AUC correlations were assessed via
-Spearman rank correlation with FDR correction. \textbf{Caution: with 1,611
-features tested against N=36 subjects, these results are underpowered and
-should be interpreted as hypothesis-generating only.}
-
-The strongest resting predictor in MAT was T5--O1 temporal--occipital
-cross-correlation ($\rho = 0.599$, uncorrected $p = 7.4 \times 10^{-5}$,
-not FDR-significant at $q=0.05$). Hjorth complexity at frontal and central
-electrodes (F4: $\rho = -0.612$, Cz: $\rho = -0.594$, both uncorrected
-$p < 0.001$) was the feature family most consistently correlated with
-classifiability. \textbf{No single feature survived FDR correction at
-$q=0.05$}. At N=36, a Spearman correlation of this magnitude has a 95\%
-confidence interval spanning approximately $[0.3, 0.8]$.
-
-A two-stage model---resting-EEG screen followed by LOSO classification only
-on subjects predicted as classifiable---was evaluated via leave-one-subject-out
-cross-validation. LOOCV prediction achieved Spearman $\rho = 0.323$
-($p = 0.054$, not significant). The screening accuracy of 86.1\% is below
-the 91.7\% baseline achieved by predicting all subjects as classifiable
-(3/36 least classifiable subjects), confirming that the two-stage approach does not improve
-performance (0.810 vs 0.828 without screening). These results are presented
-as exploratory and require prospective replication with N$\ge$200.
-
-\subsubsection{Exploratory Cross-Dataset Comparison in STEW}
-
-We repeated the resting-predictor analysis in STEW (48 subjects, 350 features
-per window, 14-channel Emotiv). Occipital absolute theta power (O1) was the
-strongest individual predictor in STEW ($\rho = -0.585$, $p = 1.3 \times 10^{-5}$,
-FDR $q = 0.005$). However, this was the only feature that survived FDR
-correction across the entire analysis; all other STEW predictors were
-FDR-non-significant. The direction of the Hjorth complexity effect was
-consistent with MAT (negative in both: STEW mean $\rho = -0.11$, MAT
-mean $\rho = -0.26$), but the STEW effect size was substantially smaller.
-
-Five STEW subjects (10.4\%) had LOSO AUC below 0.6, comparable to MAT's
-8.3\% rate. The cross-dataset consistency of the predictor direction
-(where higher resting spectral power and complexity predict worse
-classifiability) is suggestive but does not constitute formal replication
-given the small number of FDR-significant features in either dataset.
-A properly powered study (N$\ge$200 per dataset) with pre-registered
-predictors is needed to confirm these patterns.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\linewidth]{../figures/figure_classifiability_replication.png}
-\caption{Exploratory analysis of resting-EEG classifiability predictors.
-(A) LOSO AUC distribution in MAT (N=36) and STEW (N=48). Two of 36 MAT
-subjects are at chance; five of 48 STEW subjects are below AUC 0.6.
-(B) MAT: LOOCV prediction of per-subject AUC from resting EEG features
-(PCA + elastic net). Prediction was not significant ($\rho=0.323$, $p=0.054$).
-(C) STEW: same analysis. (D--E) Top resting predictors in each dataset.
-(F) Feature-type comparison. No single resting predictor survived FDR
-correction in both datasets; these results are exploratory and require
-prospective replication (N$\ge$200).}
-\label{fig:classifiability_replication}
-\end{figure}
-
-\subsubsection{Biological Interpretation of Subject Variability}
-
-The least classifiable subjects showed measurably different resting EEG
-profiles. Mann--Whitney U tests identified four features with significant
-group differences (all $p < 0.05$): lower T5--O1 correlation (least
-classifiable mean
-0.41 vs classifiable 0.62, $p = 0.004$), lower T5--P3 correlation (0.54
-vs 0.74, $p = 0.009$), lower T6--O1 correlation (0.25 vs 0.47,
-$p = 0.041$), and lower T5--O2 correlation (0.27 vs 0.43, $p = 0.041$).
-These features all reflect reduced temporal--occipital connectivity at
-rest, suggesting a baseline cognitive-phenotyping account rather than simple
-signal unreliability. One plausible interpretation is that subjects with high
-resting Hjorth complexity and weakened posterior coupling begin the
-experiment in a state of elevated cognitive load or hyperarousal, potentially
-reflecting persistent default-mode interference with frontoparietal task-set
-formation. Under that condition, the frontoparietal network may already be
-partially saturated at rest, so the additional task-induced displacement
-becomes mathematically small relative to the baseline state. In this framing,
-poor classifiability does not imply that these participants have bad EEG; it
-implies that the workload contrast is compressed because the resting state is
-already shifted toward the same control regime the task is meant to evoke.
-
-To assess potential confounds, we tested whether demographic or
-performance factors predicted per-subject AUC in the MAT dataset.
-Age (Spearman $\rho=0.10$, $p=0.58$), gender (MW $p=0.14$), number of
-arithmetic subtractions completed ($\rho=0.01$, $p=0.96$), and recording
-quality ($\rho=0.10$, $p=0.56$) were all uncorrelated with per-subject
-classification AUC. This suggests that the subject-level variability in
-workload classification is not driven by demographic or task-engagement
-factors, and that the theta effect is not a proxy for age-related or
-performance-related confounds.
-
-These results identify a concrete screening target: subjects with high
-resting Hjorth complexity, low temporal--occipital connectivity, or
-elevated parietal gamma may represent a distinct baseline cognitive
-phenotype that requires personalized calibration---longer baseline
-recording, subject-specific feature selection, or adaptive classifier
-retraining---before SNWA can achieve reliable classification. The finding
-that resting EEG profiles may predict classifiability has potential
-implications for workload system deployment: a 2-minute resting recording
-could determine whether a subject is likely to benefit from standard SNWA
-calibration or requires personalized adaptation because the frontoparietal
-workload delta is already compressed at baseline.
-Prospective validation with N$\ge$200 is needed before clinical
-implementation.
+Exploratory resting-state analyses were used only to assess whether baseline
+variance might affect classifiability. In MAT, no resting feature survived
+FDR correction across the 1,611 tested predictors at $q=0.05$, and a
+leave-one-subject-out resting-screen model did not significantly predict
+per-subject AUC ($\rho=0.323$, $p=0.054$). STEW showed one FDR-corrected
+association (occipital theta), but the broader predictor pattern did not
+replicate as a stable biomarker family across datasets. These analyses
+therefore cannot establish a definitive baseline phenotype; they only show
+that baseline variance plausibly affects classifiability and should be tested
+in a fully powered, pre-registered study.
 
 Figure~\ref{fig:topo} shows the electrode contribution map derived from
 feature-level effect sizes (Cohen's $d_z$). Parietal electrodes showed the
@@ -933,32 +767,14 @@ either band alone. These are sensor-level signatures consistent with the
 proposed mechanisms; source localization would be required for direct
 anatomical attribution.
 
-Subject variability also has a mechanistic interpretation. Exploratory
-associations between resting Hjorth complexity, occipital theta, and
-per-subject classifiability suggest that baseline state-space entropy and
-network coupling may constrain how separable a participant's workload states
-become. One biologically plausible hypothesis is that high resting Hjorth
-complexity together with weakened temporal--occipital coupling indexes a
-baseline hyperarousal or default-mode interference state in which the
-frontoparietal control system is already engaged before task onset. In that
-case, the arithmetic challenge produces only a small additional shift, making
-the workload delta mathematically difficult to resolve. A subject with a more
-constrained baseline, by contrast, may show a clearer transition onto the
-task-evoked control trajectory. These correlations require prospective
-replication, but they shift the interpretation of poor classification away
-from generic noise and toward individual differences in baseline neural
-dynamics.
-
-Our theta-gamma PAC findings reinforce the same representational lesson. PAC
-was robustly present during both rest and arithmetic (surrogate-normalized
-Z = 11.2), but fixed-band group-level task modulation was not significant
-(meta-analytic d=0.07, 90\% CI $[-0.02, 0.15]$, TOST-consistent with
-equivalence). This does not prove that workload lacks cross-frequency
-coordination. It shows that a common 4--8~Hz phase and 30--45~Hz amplitude
-definition at scalp electrodes is not a reliable invariant workload marker in
-this dataset. Individualized peak-frequency alignment and source-localized
-coupling estimates are better suited to testing whether task demand modulates
-frontoparietal or medial frontal cross-frequency interactions.
+Subject variability remains an important constraint on the workload axis, but
+the present resting-state screens cannot define a reliable biological
+phenotype. The strongest resting associations were underpowered, did not
+survive the relevant correction in MAT, and did not replicate as a stable
+cross-dataset biomarker family. The appropriate conclusion is therefore
+limited: baseline variance affects classifiability and should be modeled in
+future prospective studies, but the current data do not justify a definitive
+subject-screening rule.
 
 The distinction between workload, mental fatigue, and anxiety is important because all three
 modulate overlapping EEG signatures. Borghini et al.\ \cite{borghini2014} showed that prolonged
@@ -1046,12 +862,16 @@ Second, per-subject variability is high: 8\% of MAT participants had AUC below 0
 per-subject AUC ranged from 0.34 to 1.00. Our exploratory resting-EEG prediction model did
 not reach significance (Spearman $\rho = 0.32$, p = 0.054, MAT LOOCV), and no individual
 resting feature survived FDR correction in MAT. Only one feature survived FDR correction in
-STEW (occipital theta, q = 0.005). The consistent predictor direction across datasets is
-suggestive but does not constitute formal replication. A properly powered prospective study
-(N$\ge$200) with pre-registered predictors is needed before clinical screening recommendations
-can be made. The 8--10\% resistant-subject rate is consistent with the 20\% estimate from the
-BCI literature \cite{lotte2018}, though the lower bound may reflect our lenient AUC $>0.6$
-threshold versus typical within-subject criteria.
+STEW (occipital theta, q = 0.005), and this did not establish a replicated biomarker family.
+The baseline cognitive-phenotyping hypothesis should therefore be treated as a future target:
+high resting Hjorth complexity and disrupted temporal--occipital connectivity may indicate
+baseline hyperarousal or default-mode network interference that partially saturates the
+frontoparietal network before task onset, making the task-induced delta difficult to resolve.
+This mechanism requires a fully powered prospective study (N$\ge$200) with pre-registered
+resting predictors, source-localized metrics, and independent validation before any screening
+or calibration rule can be recommended. The 8--10\% low-classifiability rate is consistent
+with the 20\% estimate from the BCI literature \cite{lotte2018}, though the lower bound may
+reflect our lenient AUC $>0.6$ threshold versus typical within-subject criteria.
 
 Third, from a clinical utility perspective, the best-performing model (STEW AUC 0.800) achieves
 this at a default probability threshold of 0.5. At clinically meaningful operating points---90\%
@@ -1097,21 +917,12 @@ Second, domain adaptation methods remain promising for cross-dataset transfer. A
 as subspace alignment \cite{jayaram2016} and CORAL should be tested with the full channel sets
 rather than the 8-channel intersection used here.
 
-Third, theta-gamma PAC should be re-tested with individualized frequency
-alignment and source-localized coupling estimates. Subject-specific theta
-peaks, broader amplitude-frequency searches, controls for nonsinusoidal
-waveform shape, and generator-level estimates would provide a stronger test
-than fixed 4--8~Hz / 30--45~Hz sensor bands. A preregistered tACS experiment
-(6~Hz frontal, F3/F4, 2~mA, sham-controlled crossover, N=40) could then test
-whether induced theta oscillations causally modulate PAC and arithmetic
-performance.
-
-Fourth, source localization using standardized low-resolution electromagnetic
+Third, source localization using standardized low-resolution electromagnetic
 tomography (sLORETA) or MNE inverse modeling on the MAT 19-channel data would
 allow stronger anatomical attribution of the frontal theta effect to candidate
 medial frontal and prefrontal generators.
 
-Fifth, future models should explicitly learn subject-invariant latent
+Fourth, future models should explicitly learn subject-invariant latent
 representations. Contrastive objectives, domain-adversarial training,
 source-informed features, and state-space models may better separate the
 cognitive-effort trajectory from subject-specific topological constraints.
