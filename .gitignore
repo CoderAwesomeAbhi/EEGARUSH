@@ -9,4 +9,5 @@ data/raw/
 *.toc
 *.synctex.gz
 outputs/synthetic_smoke_test/
+results/theory_validation/mplconfig/
 .ipynb_checkpoints/

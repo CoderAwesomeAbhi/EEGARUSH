@@ -1,0 +1,2 @@
+dataset,path,n_rows,n_subjects,n_features_8ch,timing_status
+MAT,outputs_reproduced/features/eeg_features.csv,4266,36,200,timed_start_sec_end_sec

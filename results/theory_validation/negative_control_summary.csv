@@ -1,0 +1,3 @@
+dataset,calibration,model,observed_auc,n_permutations_requested,n_permutations_valid,permutation_auc_mean,permutation_auc_sd,permutation_p_value,note
+MAT,zscore,logistic_l2,0.8659953044212303,1000,1000,0.5083270439836798,0.010722587615580833,0.000999000999000999,Labels were permuted within subject on nested out-of-fold scores; models were not retrained for each null draw.
+STEW,zscore,linear_svm,0.7918962602338724,1000,1000,0.5003687168328611,0.014140788547835265,0.000999000999000999,Labels were permuted within subject on nested out-of-fold scores; models were not retrained for each null draw.

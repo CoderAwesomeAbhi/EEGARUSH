@@ -1,0 +1,2 @@
+dataset,model,max_auc,plateau_definition,plateau_seconds,plateau_auc
+MAT,logistic_l2,0.8761329218106995,first_duration_within_0.01_auc_of_max_valid_auc,51.0,0.8761329218106995

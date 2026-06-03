@@ -1,0 +1,2 @@
+dataset,path,n_rows,n_subjects,n_features_8ch,timing_status
+STEW,results/multi_dataset/stew_features.parquet,2000,48,200,untimed_cached_parquet_no_duration_curve
