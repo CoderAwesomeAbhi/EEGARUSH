@@ -24,7 +24,7 @@
   urlcolor=blue
 }
 
-\title{\textbf{Subject-Normalized EEG Workload Decoding Reveals an Invariant Cognitive-Effort Axis Constrained by Individual Sensor-Space Geometry}}
+\title{\textbf{Baseline-Relative EEG Workload Decoding Replicates in Exploratory Datasets but Fails a Frozen Graded External Transfer Test}}
 
 \author[1]{Abhijay Gangarapu$^{\ast}$}
 \author[1]{Arush Ravipati$^{\ast}$}
@@ -41,941 +41,446 @@
 \endgroup
 
 \begin{abstract}
-EEG markers of cognitive workload often appear highly predictive under
-random-window validation, yet fail when evaluated across unseen individuals
-or independent datasets. This failure reflects more than a validation error:
-scalp EEG combines task-related neural dynamics with subject-specific anatomy,
-baseline arousal, reference montage, and state-dependent variance, creating
-individualized sensor-space geometries that can dominate classifier decision
-boundaries. We tested whether cognitive workload contains an invariant
-low-dimensional axis that can be recovered after subject-specific baselines
-are removed. Across three public arithmetic-workload EEG datasets (N=102
-total: PhysioNet MAT, STEW, OpenNeuro DS007262), leave-one-subject-out (LOSO)
-classification replicated above chance in STEW (AUC 0.800) and MAT (AUC
-0.796), but failed in DS007262 (AUC 0.467, BF01=3.42). Prior MAT studies using
-random-window splits reported 85--92\% accuracy; strict subject-wise validation
-reduced these estimates by 15--25 percentage points. Frontal theta increased
-in all three datasets (d=0.84, $p<0.001$), consistent with frontoparietal
-control and thalamocortical gating under higher effort. A subject-normalized
-8-feature workload axis (SNWA) approached full-model performance (AUC 0.761
-vs 0.796, $p=0.15$) and generalized to DS007262 (AUC 0.618, $p=0.005$) where
-full sensor-space models failed. Exploratory resting EEG analyses suggest
-that baseline variance constrains subject-level classifiability, but these
-signals remain underpowered and hypothesis-generating. These results recast EEG workload
-decoding as an invariant-representation problem: generalization requires
-separating cognitive-effort dynamics from subject-specific sensor-space
-constraints.
+EEG workload classifiers often perform well in within-dataset analyses but
+can fail when tested on unseen people or different task designs. We evaluated
+a baseline-relative workload decoding protocol using public arithmetic EEG
+datasets and separated exploratory validation from a frozen external test.
+In the exploratory datasets, subject-specific z-scoring against resting
+baseline improved leave-one-subject-out workload decoding relative to
+absolute features and mean subtraction. With an 8-channel intersection
+(F3, F4, F7, F8, O1, O2, T3, T4) and 200 per-channel features, z-scored
+L2 logistic regression achieved MAT window ROC-AUC = 0.865995, and
+z-scored linear SVM achieved STEW window ROC-AUC = 0.791896. Negative-control
+permutations were significant for the best MAT and STEW exploratory
+configurations (empirical p = 0.000999 for both). However, feature-direction
+stability between MAT and STEW was not demonstrated: for z-scored L2
+logistic regression, the MAT--STEW coefficient correlation was
+$r = 0.0136403$ ($p = 0.847975$). We then froze the best single exploratory
+pipeline across MAT and STEW (subject z-scoring, median imputation,
+standard scaling, L2 logistic regression, C = 1.0) and applied it without
+retraining to OpenNeuro DS007262. The confirmatory graded workload test
+failed: subject-level Spearman correlation between frozen decision score and
+ordinal difficulty was $\rho = -0.0176745$ with one-sided
+$p = 0.577865$ across 18 subjects and 1,134 scored trials. These results
+support baseline-relative calibration as a useful exploratory preprocessing
+step for within-paradigm EEG workload decoding, but they do not support a
+universal or monotonic cross-dataset workload axis.
 \end{abstract}
 
 \section{Introduction}
 
-Cognitive effort changes the operating state of distributed neural systems
-that coordinate attention, working memory, and executive control. The most
-replicated sensor-level EEG signature is an increase in theta-band power
-(4--8~Hz), particularly over frontal midline electrodes, accompanied by
-alpha-band suppression (8--13~Hz), especially over posterior regions
-\cite{klimesch1999, gevins1997, sridhar2022}. This theta/alpha dynamic has
-been observed across mental arithmetic \cite{zyma2019}, working memory
-\cite{gevins1997}, and sustained attention \cite{klimesch1999}, suggesting
-that cognitive workload engages a domain-general control process rather than
-a task-specific spectral artifact. Mechanistically, frontal theta is commonly
-linked to medial frontal and frontoparietal control-network engagement
-\cite{cavanagh2014}, whereas posterior alpha suppression is often interpreted
-as reduced inhibition of task-relevant cortical processing \cite{klimesch1999}.
+Cognitive workload is commonly associated with changes in theta- and
+alpha-band EEG activity during arithmetic, working memory, and attention
+tasks \cite{klimesch1999, gevins1997, zyma2019}. These signatures motivate
+EEG-based workload monitoring, but they do not by themselves establish
+generalizable prediction. Scalp EEG features also encode stable differences
+between participants, reference montages, electrode layouts, task timing,
+and recording systems. A model can therefore perform well by exploiting
+subject- or dataset-specific structure rather than a task-general workload
+signal \cite{lotte2018}.
 
-EEG makes these dynamics practical to measure, but difficult to generalize.
-Scalp potentials are indirect, reference-dependent mixtures of cortical and
-subcortical sources shaped by skull conductivity, electrode geometry, baseline
-arousal, and individual neurophysiology. A model trained on raw sensor-level
-features can therefore learn the geometry of a participant as easily as it
-learns the geometry of a task. The central obstacle is not simply that some
-studies use flawed cross-validation. Rather, cognitive workload appears within
-individualized sensor-space manifolds: each subject begins from a distinct
-baseline state, and task demand perturbs that state under constraints imposed
-by anatomy, neural noise, reference montage, and network organization.
-Zero-shot generalization fails when between-subject geometry is larger than
-the within-subject workload displacement.
+The present manuscript tests the \textit{Baseline-Relative Workload Transfer
+Hypothesis}: if workload-relevant EEG changes are partly shared across
+subjects and datasets, then expressing each subject's task windows relative
+to that subject's resting baseline should improve within-dataset decoding
+and should produce a monotonic increase in frozen model score across graded
+external workload levels. This hypothesis has two separable parts. The
+exploratory part asks whether baseline-relative calibration improves
+classification in datasets with rest-versus-task labels. The confirmatory
+part asks whether a frozen model trained on exploratory data scales
+monotonically with difficulty in an untouched graded external dataset.
 
-Much of the EEG workload-decoding literature has treated generalization as a
-classifier-selection problem. Studies extract spectral power, Hjorth
-parameters, and connectivity measures, then
-compare algorithms using random splits across windows. This validation scheme
-allows the same participant to appear in both training and test folds
-\cite{lotte2018}. Several PhysioNet MAT studies illustrate the issue: Hakimi
-et al.\ \cite{hakimi2023} reported 91.7\% accuracy using convolutional neural
-networks with subject-dependent splits; Nguyen and Huynh \cite{nguyen2025}
-reported 85.7\% F1 using KNN with random-window validation; Roy et al.\
-\cite{roy2016} reported >85\% accuracy using random subsets. Such estimates
-can reward recognition of subject identity, recording artifacts, or stable
-baseline differences. They do not test whether workload occupies a
-reproducible representational axis across unseen people.
-
-The present study reframes EEG workload decoding as an invariant
-representation problem. We integrate three public arithmetic-workload EEG
-datasets (MAT N=36, STEW N=48, DS007262 N=18; total N=102), enforce strict
-leave-one-subject-out (LOSO) validation with all preprocessing, feature
-selection, and model fitting contained within training folds, and evaluate
-cross-dataset transfer. We introduce the Subject-Normalized Workload Axis
-(SNWA), a compact representation that expresses task windows relative to each
-subject's own resting baseline and then selects features with consistent
-signed workload displacement across training subjects. Operationally, SNWA is
-a robust within-subject normalization and weighting procedure; conceptually,
-it tests whether workload can be represented as a shared low-dimensional
-direction after subject-specific baseline offsets and scales have been
-partially removed. In biological terms, SNWA is intended to isolate the
-task-induced fronto-hippocampal theta component from concurrent
-thalamocortical alpha disinhibition, so that the model receives a
-subject-aligned representation of cognitive effort rather than absolute scalp
-power alone.
-
-We test four questions. First, do frontal theta enhancement and posterior
-alpha suppression replicate across datasets under subject-wise validation?
-Second, do conventional sensor-level classifiers generalize to unseen
-participants and independent datasets? Third, does SNWA recover an
-interpretable workload axis that approaches full-model performance while
-transferring across datasets? Fourth, what source-localization analysis is
-needed to connect the workload axis to cortical generators? By moving from
-benchmark accuracy to representational invariance, this study asks which
-parts of the EEG workload signal survive the transition from subject-specific
-sensor coordinates to a shared cognitive effort axis.
+We evaluated this hypothesis using three public EEG datasets: PhysioNet EEG
+During Mental Arithmetic Tasks (MAT) \cite{physionet_eegmat, zyma2019,
+goldberger2000}, STEW \cite{stew_dataset}, and OpenNeuro DS007262
+\cite{openneuro_ds007262}. The analysis was deliberately constrained to
+results that were actually executed in the repository. We do not report
+unverified coupling analyses, source reconstruction, or anatomical generator
+claims, because those analyses were not part of the verified validation
+pipeline. The central question is methodological: which workload claims
+survive strict subject-wise validation and a frozen external graded test?
 
 \section{Materials and Methods}
 
 \subsection{Datasets}
 
-Three publicly available EEG datasets were included:
+\textbf{MAT.} The MAT dataset includes 36 participants with resting and
+mental arithmetic EEG blocks recorded at 256 Hz using a 19-channel 10--20
+montage \cite{physionet_eegmat, zyma2019}. Files ending in
+\texttt{\_1.edf} were treated as rest and files ending in \texttt{\_2.edf}
+as arithmetic.
 
-\textbf{PhysioNet EEG During Mental Arithmetic Tasks (MAT)} \cite{physionet_eegmat, zyma2019, goldberger2000}.
-36 participants completed baseline (eyes open, rest) and mental arithmetic
-(serial subtraction) blocks. EEG was recorded at 256~Hz using a 19-channel
-10--20 montage (Fp1, Fp2, F3, F4, C3, C4, P3, P4, O1, O2, F7, F8, T3, T4,
-T5, T6, Fz, Cz, Pz). Files ending in \texttt{\_1.edf} were labeled rest
-(label 0); \texttt{\_2.edf} files were labeled arithmetic (label 1).
+\textbf{STEW.} The STEW dataset includes 48 participants recorded at
+128 Hz with a 14-channel Emotiv EPOC+ headset during baseline and mental
+arithmetic workload conditions \cite{stew_dataset}. STEW channel names were
+mapped to the closest standard 10--20 labels where needed.
 
-\textbf{STEW (Simultaneous Task EEG Workload)} \cite{stew_dataset}.
-48 participants performed a mental arithmetic task and a no-task baseline.
-EEG was recorded at 128~Hz using a 14-channel Emotiv EPOC+ headset (AF3, F7,
-F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4). Channel names were
-mapped to standard 10--20 nomenclature (T7 $\rightarrow$ T3, P7 $\rightarrow$
-T5, T8 $\rightarrow$ T4, P8 $\rightarrow$ T6).
+\textbf{DS007262.} OpenNeuro DS007262 contains arithmetic trials with graded
+difficulty ranges and 19-channel EEG recorded at 250 Hz
+\cite{openneuro_ds007262}. The local event files used in the frozen
+confirmatory analysis exposed seven non-tutorial numeric difficulty ranges
+from 0.6--1.5 through 6.0--6.9. The confirmatory analysis scored all
+available non-tutorial numeric task trials rather than inventing an eighth
+level.
 
-\textbf{OpenNeuro DS007262} \cite{openneuro_ds007262}.
-18 participants completed an 8-level arithmetic difficulty task. The full
-dataset contains 20 participants; 2 were excluded due to incomplete
-recordings or missing event markers, yielding 18 usable subjects. EEG was
-recorded at 250~Hz using a 19-channel 10--20 montage (Fp1, Fp2, F7, F3, Fz,
-F4, F8, T3, C3, Cz, C4, T4, T5, P3, Pz, P4, T6, O1, O2) with linked-ear
-reference. We defined a workload-gradient contrast: low difficulty (levels
-0.6--1.5, label 0) versus high difficulty (levels 6.0--6.9, label 1),
-extracting one 4-second window per event. The difficulty thresholds follow
-the original dataset design, where levels 0.6--1.5 correspond to single-digit
-subtractions and levels 6.0--6.9 to multi-digit subtractions with carry
-operations.
+\subsection{Frozen Feature Space}
 
-Total combined sample: 102 participants, 3 datasets.
+All validation analyses used the same 8-channel intersection across MAT,
+STEW, and DS007262: F3, F4, F7, F8, O1, O2, T3, and T4. For each channel,
+25 per-channel features were used, yielding 200 features total. The feature
+templates were time-domain moments and morphology, Hjorth parameters,
+Shannon entropy, spectral entropy, absolute and relative bandpower in delta,
+theta, alpha, beta, and gamma bands, and theta/alpha, beta/alpha, and
+theta/beta ratios. The exact feature definition is locked in
+\texttt{FROZEN\_CONFIG.yaml}.
 
-\textbf{Channel harmonization.} The three datasets used different electrode
-montages. MAT and DS007262 both use 19-channel 10--20 layouts with 15 of 19
-channels in common (Fp1, Fp2, F3, F4, C3, C4, P3, P4, O1, O2, F7, F8, T3,
-T4, T5, T6, Fz, Cz, Pz vs.\ Fp1, Fp2, F7, F3, Fz, F4, F8, T3, C3, Cz, C4,
-T4, T5, P3, Pz, P4, T6, O1, O2). STEW uses a 14-channel Emotiv EPOC+ layout
-with 8 channels mappable to 10--20 nomenclature. The 8-channel intersection
-across all three datasets was: F3, F4, P3, P4, O1, O2, F7, F8. Channels
-dropped from MAT included Fp1, Fp2, C3, C4, T3, T4, T5, T6, Fz, Cz, Pz (11
-channels). Channels dropped from DS007262 included Fp1, Fp2, Fz, Cz, Pz, C3,
-C4, T3, T4, T5, T6 (11 channels). From STEW, the non-mappable channels AF3,
-FC5, T7, P7, P8, T8, FC6, AF4 (6 channels) were dropped. All analyses
-reported in this paper used only these 8 common channels to ensure
-fair cross-dataset comparison.
+\subsection{Exploratory Baseline-Calibration Comparison}
 
-\subsection{Preprocessing and Feature Extraction}
+For MAT and STEW, the repository implemented strict leave-one-subject-out
+(LOSO) validation. In each fold, the held-out subject was excluded from
+calibration statistics, imputation, scaling, and model fitting. The
+exploratory comparison tested three feature representations:
+\begin{enumerate}
+    \item absolute features;
+    \item mean subtraction relative to subject baseline;
+    \item z-scoring relative to subject baseline.
+\end{enumerate}
 
-EEG files were read with MNE-Python \cite{mne}. Signals were converted to
-microvolts. For MAT, 4-second windows with 50\% overlap were extracted
-(256 samples per window). For DS007262, 4-second event-locked windows were
-extracted at 250~Hz. STEW had pre-segmented trials at 128~Hz, windowed to
-4 seconds.
+MAT used the first 60 seconds of resting windows as calibration rows and
+excluded those rows from scoring. STEW did not contain timing metadata in
+the cached parquet table, so the first 50\% of each subject's rest rows by
+row order were used as calibration rows. L2 logistic regression and linear
+SVM were evaluated with fixed C = 1.0; no label-dependent hyperparameter
+search was performed in these confirmatory validation scripts.
 
-No bandpass filter, notch filter, or artifact rejection was applied by
-default. This decision was deliberate: applying filtering or rejection before
-cross-validation would leak information across folds, and we wanted the
-classifiers to learn spectro-temporal structure directly from raw voltage
-distributions. We confirm that the absence of a notch filter does not affect
-our primary findings, which rely on theta (4--8~Hz) and alpha (8--13~Hz)
-bands that are distant from line-noise frequencies (50/60~Hz). No
-re-referencing was performed; channel data were used as recorded.
-Importantly, the three datasets used different reference electrodes: MAT
-uses an online reference (unspecified), DS007262 uses linked-ear reference,
-and STEW uses Emotiv's internal reference (CMS/DRL). Reference choice
-affects the apparent scalp distribution of EEG activity, particularly
-alpha power at occipital electrodes, and is a known confound in
-cross-dataset EEG analysis. However, ratio measures (theta/alpha,
-theta/beta) are reference-independent because the reference contribution
-cancels in division, and the across-dataset consistency of the theta/alpha
-modulation (present in all three datasets despite different references)
-supports this claim. Future work should use standardized average
-re-referencing to enable direct comparability. Kurtosis and peak-to-peak amplitude were
-included as predictive features rather than rejection criteria, allowing
-the model to weight or ignore them per fold.
-No resampling was applied; each dataset was analyzed at its native sampling
-rate (MAT: 256~Hz, STEW: 128~Hz, DS007262: 250~Hz). The 4-second window
-length was chosen based on prior workload EEG studies that tested windows
-of 1--8~seconds and found 4~seconds to balance spectral resolution
-(\textgreater{}2 cycles at 4~Hz) and temporal stationarity \cite{lotte2018}.
-All 19 MAT channels (Fp1, Fp2, F3, F4, C3, C4, P3, P4, O1, O2, F7, F8, T3,
-T4, T5, T6, Fz, Cz, Pz) and the 14 STEW channels (AF3, F7, F3, FC5, T7, P7,
-O1, O2, P8, T8, FC6, F4, F8, AF4, mapped to 10--20 nomenclature) were
-considered in single-dataset analyses; only the 8-channel intersection
-(F3, F4, P3, P4, O1, O2, F7, F8) was used for cross-dataset comparisons.
+\subsection{Calibration-Duration Curve}
 
-Each window was represented by 805 interpretable features per channel:
-\begin{itemize}
-    \item \textbf{Bandpower}: Welch's PSD estimate (\texttt{scipy.signal.welch},
-    segment length $\min(\max(32, 2f_s), N)$, 50\% overlap, density scaling).
-    Absolute bandpower via trapezoidal integration in delta (0.5--4~Hz),
-    theta (4--8~Hz), alpha (8--13~Hz), beta (13--30~Hz), gamma (30--45~Hz).
-    Relative bandpower normalized to total power (0.5--45~Hz).
-    \item \textbf{Band ratios}: theta/alpha, beta/alpha, theta/beta.
-    \item \textbf{Hjorth parameters}: activity (variance), mobility
-    ($\sqrt{\text{var}(dx)/\text{var}(x)}$), complexity
-    ($\sqrt{\text{var}(d^2x)/\text{var}(dx)}/\text{mobility}$).
-    \item \textbf{Time-domain morphology}: mean, standard deviation, variance,
-    RMS amplitude, peak-to-peak, skewness, kurtosis.
-    \item \textbf{Entropy}: Shannon entropy (20-bin histogram), spectral
-    entropy (from normalized PSD).
-    \item \textbf{Regional summaries}: channels grouped by electrode prefix
-    (frontal, central, parietal, occipital, temporal), with within-region
-    bandpower means.
-    \item \textbf{Hemispheric summaries}: odd- vs even-numbered electrode
-    means.
-    \item \textbf{Channel correlations}: pairwise Pearson correlations across
-    all channel pairs per window; mean, standard deviation, absolute mean, and
-    left--right hemisphere cross-correlation summaries.
-\end{itemize}
+For MAT, the resting baseline duration was varied from 1 second upward in
+2-second increments. For each duration, the same fixed-C LOSO logistic
+regression protocol was rerun. The plateau was defined as the first
+duration within 0.01 ROC-AUC of the maximum valid ROC-AUC. STEW did not
+support this analysis because the cached table did not include timing
+metadata.
 
-\subsection{Subject-Normalized Workload Axis (SNWA)}
+\subsection{Effect-Direction Stability}
 
-SNWA operationalizes a subject-aligned workload coordinate. The procedure
-first expresses each task window relative to that subject's own resting
-feature distribution, reducing subject-specific offsets and scale differences
-before cross-subject feature selection. In mechanistic terms, the projection
-is designed to amplify the coordinated increase in fronto-hippocampal theta
-relative to the concurrent release of posterior alpha inhibition, rather than
-to treat all baseline power differences as equally informative. For each
-subject $s$, window $w$, and feature $f$:
+To test whether a shared signed feature direction was present across
+exploratory datasets, the fitted coefficient vectors from MAT and STEW
+models were correlated using Pearson correlation for each model and
+calibration condition. This analysis tests coefficient-direction stability;
+it is not a source-localization analysis and cannot establish anatomical
+invariance.
 
+\subsection{Negative Controls}
+
+The repository implemented 1,000 within-subject label permutations on
+nested out-of-fold scores for the best observed MAT and STEW exploratory
+configurations. The empirical p-value was computed as
 \[
-z_{s,w,f} = \frac{x_{s,w,f} - \text{median}_{\text{rest},s}(f)}
-{\text{MAD}_{\text{rest},s}(f) + 10^{-8}}
+p = \frac{1 + \#(\mathrm{null\ AUC} \geq \mathrm{observed\ AUC})}{1 + N_{\mathrm{valid\ permutations}}}.
 \]
+These controls test score-label association in the out-of-fold predictions;
+they do not replace retrained permutation tests.
 
-Within each LOSO training fold, features are ranked by signed effect size
-(workload minus rest, standardized). The top $K$ features are selected
-($K \in \{3,5,8,12,20\}$) and weighted by their effect size. The weighted
-sum forms a scalar workload score $W(x)$, interpreted as a low-dimensional
-projection onto the most consistent subject-normalized direction of workload
-change in the training data. A one-dimensional logistic regression model is
-calibrated on training subjects only. SNWA therefore approximates manifold
-alignment in feature space, but it does not perform source localization or
-learn an explicit nonlinear neural manifold.
+\subsection{Frozen DS007262 Confirmatory Test}
 
-\subsection{Validation Framework}
+The single model frozen for DS007262 was selected before viewing DS007262
+graded scores: subject z-scoring, median imputation, standard scaling, and
+L2 logistic regression with C = 1.0, \texttt{solver = liblinear},
+\texttt{class\_weight = balanced}, \texttt{max\_iter = 5000}, and
+\texttt{random\_state = 20260602}. This choice had the best mean exploratory
+MAT/STEW window ROC-AUC among the tested single-model options. The model was
+trained on MAT and STEW scored rows only. No DS007262 rows were used for
+model fitting, model selection, feature selection, or hyperparameter tuning.
 
-\textbf{Leave-one-subject-out cross-validation.} In each of $N$ folds (one per
-subject), all windows from the held-out subject are completely excluded from:
-imputation (median), scaling (standard scaler), feature ranking, feature
-selection, SNWA weighting, model fitting, and probability calibration. Only
-the trained pipeline is applied to the held-out subject.
-
-\textbf{Hyperparameter search.} SVM cost $C \in \{0.1, 1, 10\}$ and RBF
-kernel $\gamma \in \{\text{scale}, 0.01, 0.1\}$ were selected via inner
-5-fold cross-validation within each LOSO training fold. The $C=1$ and
-$\gamma=\text{scale}$ defaults were selected in 78\% of folds, indicating
-reasonable parameter stability across subjects.
-
-\textbf{Window overlap sensitivity.} The primary analysis used 50\% overlap
-for window extraction in the MAT dataset. Sensitivity analysis at 0\%, 25\%,
-50\%, and 75\% overlap showed that AUC varied by less than 0.02 across
-conditions (mean AUC: 0.701, 0.708, 0.712, 0.706), confirming that results
-are not driven by the specific overlap choice.
-
-\textbf{Cross-dataset near-transfer stress test.} For each pair of datasets
-(and for MAT+STEW $\rightarrow$ DS007262), the complete pipeline was trained
-on all subjects from the source dataset(s) and tested on all subjects from the
-target dataset, without any target subject appearing in training. We
-characterize this as a near-transfer stress test rather than true external
-validation because the channel intersection constraint limits the feature
-space and the task designs differ across datasets.
-
-\textbf{Negative controls.} Four controls tested signal specificity:
-(A) label permutation within training subjects per LOSO fold;
-(B) circular label shift within subject; (C) Gaussian random features matched
-to the feature matrix; (D) subject-identity prediction to quantify
-subject-specific structure.
-
-\subsection{Statistical Analysis}
-
-\textbf{Primary classifier.} SVM with RBF kernel (libsvm, C=1.0, gamma='scale',
-probability=True, class\_weight='balanced') was pre-specified as the primary
-classifier based on its established performance in EEG BCI literature
-\cite{lotte2018}. All primary results report SVM RBF. Four additional
-classifier families (logistic regression, gradient boosting, random forest,
-XGBoost) were tested as supplementary analyses to assess robustness.
-All five families are reported in Supplementary Table~S3 for completeness;
-the primary conclusions do not depend on the choice of classifier.
-
-All analyses used global random seed 42 (\texttt{numpy.random.default\_rng(42)})
-and scikit-learn \cite{sklearn} estimators with \texttt{random\_state=42}.
-Figures use a colorblind-safe palette (IBM Color Universal Design)
-\cite{wong2011} throughout. All figures were rendered at 300~DPI minimum. Subject-level
-bootstrap confidence intervals (2,000 resamples) resampled subjects, not
-windows. Permutation tests used 1,000 null permutations to obtain empirical
-p-values. DeLong's test compared correlated ROC-AUCs. Effect sizes were
-reported as Cohen's d for paired comparisons. Benjamin-Hochberg
-false-discovery-rate control (q=0.05) was applied to feature-level
-statistics. Classification metrics included accuracy, sensitivity,
-specificity, F1, ROC-AUC, and precision-recall AUC. Calibration was assessed
-via Brier score and expected calibration error. The analysis was exploratory
-rather than pre-registered; all results should be considered
-hypothesis-generating. Supplementary analyses included: mutual information
-between features and labels to validate effect-size rankings; variance inflation
-factor (VIF) analysis, which confirmed substantial multicollinearity (mean VIF
-across features = 12.7, 95\% CI [8.2, 17.1])---feature importance rankings
-should be interpreted with this collinearity in mind, as the most consistently
-selected features may reflect hub features of correlated clusters rather than
-independent contributions; log-transform sensitivity on
-bandpower features; threshold-sensitivity analysis (precision/recall/F1 at 33
-threshold levels); a learning curve (training subjects 4--32, 5 repeats);
-repeated LOSO with 10 random subject-order permutations; and linear SVM as an
-interpretable alternative to the RBF kernel. Connectivity features were tested
-separately via LOSO classification and equivalence testing against chance.
-Per-subject window counts (mean 29 rest, 15 arithmetic for MAT; 20 per
-condition for DS007262) are reported in Supplementary Table~S4.
-
-\subsection{Source Localization}
-
-Source localization will be performed on the MAT 19-channel recordings to
-estimate cortical generators of the theta/alpha workload axis.
-% TODO: Insert exact sLORETA/MNE inverse-modeling parameters here, including
-% head model, electrode montage, noise covariance, inverse method, source
-% space, regularization, frequency-band extraction, and statistical testing.
+For each DS007262 subject, the first 60 seconds after the
+\texttt{started\_tutorial\_artihmetic} event marker were used as
+baseline-calibration data and split into non-overlapping 6-second windows.
+All non-tutorial numeric arithmetic trials with positive duration were
+scored. The primary confirmatory statistic was Spearman correlation between
+ordinal workload level and frozen logistic-regression decision score after
+averaging scores within each subject-level difficulty bin. The prespecified
+success criterion required at least 12 readable subjects, at least 6
+available difficulty levels, positive one-sided Spearman p < 0.05, and
+$\rho \geq 0.20$.
 
 \section{Results}
 
-\subsection{Dataset Composition and Channel Intersection}
+\subsection{Baseline-Relative Calibration Improved Exploratory Decoding}
 
-Figure~\ref{fig:flow} summarizes participant selection and dataset composition.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.82\linewidth]{../figures/figure_flow_diagram.png}
-\caption{Participant flow diagram. Three public datasets (MAT N=36, STEW N=48, DS007262 N=18) were harmonized to 8 common channels (F3, F4, F7, F8, O1, O2, P3, P4). The 10-channel intersection (adding T3, T4) was used for cross-dataset analyses. Total N=102 participants across all analyses.}
-\label{fig:flow}
-\end{figure}
-
-After harmonization across three datasets, 8 channels were common to all:
-F3, F4, P3, P4, O1, O2, F7, F8. These 8 channels support 200 feature
-columns per dataset after the intersection (out of 805 in the full MAT
-feature table). All subsequent analyses used only these common features.
-Table~\ref{tab:datasets} summarizes the composition.
+Z-scoring relative to subject baseline was the strongest calibration strategy
+in both exploratory datasets (Table~\ref{tab:calibration}). In MAT,
+z-scored L2 logistic regression achieved window ROC-AUC = 0.865995 across
+3,186 predictions from 36 subjects. In STEW, z-scored linear SVM achieved
+window ROC-AUC = 0.791896 across 1,519 predictions from 48 subjects, while
+z-scored L2 logistic regression was nearly identical at ROC-AUC = 0.791446.
+Absolute features and mean subtraction were weaker in STEW, and absolute
+features were weaker than z-scoring in MAT.
 
 \begin{table}[ht]
 \centering
-\caption{Dataset composition after harmonization to 8 common channels.}
-\label{tab:datasets}
-\begin{tabular}{lrrrr}
+\caption{Exploratory LOSO baseline-calibration comparison using 200 frozen 8-channel features.}
+\label{tab:calibration}
+\small
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{lllrrrr}
 \toprule
-Dataset & N subjects & N windows & Workload proportion & Sampling rate \\
+Dataset & Model & Calibration & N subjects & N predictions & Window ROC-AUC & Subject AUC mean \\
 \midrule
-MAT & 36 & 4,266 & 0.253 & 256~Hz \\
-STEW & 48 & 6,240 & 0.500 & 128~Hz \\
-DS007262 & 18 & 360 & 0.500 & 250~Hz \\
+MAT & L2 logistic & z-score & 36 & 3186 & 0.865995 & 0.874355 \\
+MAT & linear SVM & z-score & 36 & 3186 & 0.858511 & 0.865624 \\
+MAT & L2 logistic & mean subtraction & 36 & 3186 & 0.826001 & 0.843782 \\
+MAT & L2 logistic & absolute & 36 & 3186 & 0.736025 & 0.792007 \\
+STEW & linear SVM & z-score & 48 & 1519 & 0.791896 & 0.810585 \\
+STEW & L2 logistic & z-score & 48 & 1519 & 0.791446 & 0.806968 \\
+STEW & L2 logistic & absolute & 48 & 1519 & 0.723308 & 0.737614 \\
+STEW & L2 logistic & mean subtraction & 48 & 1519 & 0.694381 & 0.742161 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+The negative controls were also favorable for the exploratory classifiers.
+For MAT z-scored L2 logistic regression, observed ROC-AUC was 0.865995,
+the permutation mean was 0.508327, and empirical p = 0.000999. For STEW
+z-scored linear SVM, observed ROC-AUC was 0.791896, the permutation mean
+was 0.500369, and empirical p = 0.000999.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.48\linewidth}
+\centering
+\includegraphics[width=\linewidth]{../../results/theory_validation/figures/roc_curves_mat.png}
+\caption{MAT ROC curves}
+\end{subfigure}
+\begin{subfigure}{0.48\linewidth}
+\centering
+\includegraphics[width=\linewidth]{../../results/theory_validation/figures/roc_curves_stew.png}
+\caption{STEW ROC curves}
+\end{subfigure}
+\caption{Exploratory LOSO ROC curves from the executed theory-validation pipeline.}
+\label{fig:roc}
+\end{figure}
+
+\subsection{Calibration-Duration Curve}
+
+The MAT calibration-duration curve showed a maximum valid ROC-AUC of
+0.876133 for z-scored L2 logistic regression. Under the preregistered
+plateau definition, the first duration within 0.01 ROC-AUC of the maximum
+was 51 seconds, with plateau ROC-AUC = 0.876133. Durations from 77 seconds
+onward were not run because too few post-calibration resting windows remained
+for valid subject-level scoring in all subjects.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.76\linewidth]{../../results/theory_validation/figures/calibration_duration_curve_mat.png}
+\caption{MAT calibration-duration curve from the executed fixed-C LOSO
+pipeline. The observed plateau occurred at 51 seconds by the rule
+``first duration within 0.01 ROC-AUC of the maximum valid ROC-AUC.''}
+\label{fig:duration}
+\end{figure}
+
+\subsection{Feature-Direction Stability Was Not Demonstrated}
+
+The coefficient-direction analysis did not support a stable shared signed
+feature axis between MAT and STEW. For the frozen z-scored L2 logistic
+model, the MAT--STEW coefficient correlation was $r = 0.0136403$ with
+$p = 0.847975$. Across all tested calibration/model combinations, Pearson
+correlations ranged from -0.0415691 to 0.0734667 and none were significant
+(Table~\ref{tab:direction}). This result directly rules out a manuscript
+claim that the current analyses identified an invariant universal axis.
+
+\begin{table}[ht]
+\centering
+\caption{MAT--STEW coefficient-direction stability across exploratory configurations.}
+\label{tab:direction}
+\small
+\begin{tabular}{llrr}
+\toprule
+Calibration & Model & Pearson $r$ & p-value \\
+\midrule
+absolute & L2 logistic & -0.005644 & 0.936778 \\
+absolute & linear SVM & -0.041569 & 0.558922 \\
+mean subtraction & L2 logistic & 0.073467 & 0.301201 \\
+mean subtraction & linear SVM & -0.016498 & 0.816643 \\
+z-score & L2 logistic & 0.013640 & 0.847975 \\
+z-score & linear SVM & 0.046750 & 0.510952 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Frontal Theta Increases During Arithmetic Across All Three Datasets}
-
-Frontal theta power (mean of F3 and F4 channels) was significantly higher
-during arithmetic than rest in all three datasets (Figure~\ref{fig:theta_boxplot}).
-For MAT: mean rest theta = 0.47~$\mu$V$^2$, workload theta = 0.74~$\mu$V$^2$,
-paired difference $\Delta = 0.27$~$\mu$V$^2$ (95\% CI [0.18, 0.36],
-$t(35)=6.12$, p<0.001, d=0.84). For STEW: $\Delta = 0.19$~$\mu$V$^2$
-(95\% CI [0.11, 0.27], p<0.001, d=0.71). For DS007262: $\Delta = 0.23$~$\mu$V$^2$
-(95\% CI [0.09, 0.37], p=0.003, d=0.68).
-
-Frontal alpha power decreased significantly in all datasets (MAT: $\Delta =
--0.31$~$\mu$V$^2$, d=-0.62, p<0.001; STEW: $\Delta = -0.24$~$\mu$V$^2$,
-d=-0.55, p<0.001; DS007262: $\Delta = -0.18$~$\mu$V$^2$, d=-0.48, p=0.012).
-The theta/alpha ratio was the single most discriminative feature across all
-datasets, with an average fold-rank in the top 3 across all LOSO iterations.
-
-To test whether frontal midline theta contributes above lateral frontal
-channels, we examined the Fz electrode in the MAT dataset using relative
-theta bandpower from the pre-computed feature set (Fz is available in MAT
-and DS007262 but not in STEW). Fz relative theta also showed a significant
-increase during arithmetic (d=0.53, p=0.003, N=36), confirming that the
-frontal midline effect is captured by both absolute and relative theta
-measures. Cz relative theta showed a trend in the same direction (d=0.34,
-p=0.052). These results indicate that the absolute theta power discrepancy
-between the raw EDF and pre-computed feature CSV is limited to absolute
-bandpower; relative bandpower and ratio measures are robust across both
-preprocessing pipelines.
-
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.82\linewidth]{../figures/figure_subject_auc_distribution.png}
-\caption{LOSO validation reveals substantial per-subject variability in EEG
-workload classification (combined N=102, AUC 0.773, SVM RBF).
-DS007262 (N=18) is at chance (AUC 0.467, Bayesian BF01=3.42, moderate
-evidence against above-chance classification), demonstrating that
-8-channel intersection features are insufficient for cross-dataset
-generalization in a graded-difficulty design. Dashed line: chance (AUC 0.5).}
-\label{fig:theta_boxplot}
+\includegraphics[width=0.76\linewidth]{../../results/theory_validation/figures/effect_direction_stability.png}
+\caption{Coefficient-direction stability between MAT and STEW. All
+correlations were near zero and non-significant, including the frozen
+z-scored L2 logistic model.}
+\label{fig:direction}
 \end{figure}
 
-\subsection{Cortical Generators of the Workload Axis}
+\subsection{Frozen DS007262 Graded Transfer Failed}
 
-Inverse modeling will be used to test whether the theta/alpha workload axis
-localizes to medial frontal, anterior cingulate, or other control-network
-generators rather than remaining only a sensor-space effect.
-% TODO: Insert inverse-modeling findings here after source localization is run,
-% including cortical maps, source-level effect sizes, confidence intervals,
-% and multiple-comparison-corrected statistics.
+The DS007262 confirmatory test applied the frozen MAT/STEW-trained model
+without retraining on DS007262. All 18 released subjects were readable, and
+1,134 non-tutorial graded task trials were scored. The available event files
+contained seven ordinal levels, not eight, with 162 trials per level.
 
-\subsection{Subject-Wise Classification Replicates Above Chance}
-
-Table~\ref{tab:loso} shows LOSO classification performance using the
-10-channel common feature intersection (250 features). The combined analysis
-(N=102) achieved AUC 0.773 (SVM RBF). Per-dataset results varied
-substantially: STEW AUC 0.800, MAT AUC 0.709, and DS007262 AUC 0.467
-(not significantly above chance). The strong STEW result likely reflects
-its balanced class distribution and consistent 14-channel Emotiv recording
-setup, while DS007262's chance-level performance may stem from its graded
-difficulty design differing substantially from the rest-vs-arithmetic
-paradigm in MAT and STEW.
+The primary confirmatory result was a failure under the locked rules
+(Table~\ref{tab:ds}). The subject-level Spearman correlation between frozen
+decision score and ordinal workload level was
+$\rho = -0.0176745$ with two-sided $p = 0.844270$ and one-sided positive
+monotonicity $p = 0.577865$. The trial-level Spearman correlation was also
+negative and non-significant ($\rho = -0.0146273$, one-sided
+$p = 0.688660$). Per-subject correlations had mean $\rho = -0.0595238$,
+median $\rho = 0$, and 8 of 18 subjects showed positive correlations.
 
 \begin{table}[ht]
 \centering
-\caption{LOSO classification performance across datasets (SVM RBF) using the 10-channel feature intersection. 95\% subject-bootstrap CIs in brackets.}
-\label{tab:loso}
+\caption{Frozen DS007262 graded workload confirmatory result.}
+\label{tab:ds}
 \small
 \adjustbox{max width=\textwidth}{%
-\begin{tabular}{lcrrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
-Dataset & N & Accuracy & Sensitivity & Specificity & F1 & ROC-AUC \\
+Status & N subjects & N trials & Levels & Subject-level $\rho$ & One-sided p & Trial-level $\rho$ \\
 \midrule
-MAT & 36 & 0.710 & 0.494 & 0.783 & 0.463 & 0.709 \\
-STEW & 48 & 0.728 & 0.768 & 0.687 & 0.741 & 0.800 \\
-DS007262 & 18 & 0.494 & 0.533 & 0.456 & 0.513 & 0.467 \\
-COMBINED & 102 & 0.708 & 0.699 & 0.712 & 0.621 & 0.773 \\
-\bottomrule
-\multicolumn{7}{l}{\small DS007262 Bayes factor (JZS, r=0.707): BF01 = 3.42, moderate evidence for AUC <= 0.5.} \\
-\multicolumn{7}{l}{\small TOST equivalence test against min effect = 0.05: p = 0.038, AUC practically equivalent to chance.} \\
-\multicolumn{7}{l}{\small Full-feature MAT (805 features, N=36): AUC 0.796 [0.747, 0.857], F1 0.519 [0.463, 0.589]} \\
-\multicolumn{7}{l}{\small Linear SVM (805 features): AUC 0.820 $\pm$ 0.166 (comparable to RBF)} \\
-\multicolumn{7}{l}{\small Repeated LOSO (10 subject-order permutations): AUC 0.829 $\pm$ 0.000} \\
-\multicolumn{7}{l}{\small Subject bootstrap (2000 resamples over N=36 subjects, not windows).} \\
-\end{tabular}}
-\end{table}
-
-All models exceeded negative controls on the MAT dataset. The label-permutation
-null distribution (1,000 repeats) had mean AUC 0.501 $\pm$ 0.028; the real
-AUC of 0.796 (full feature set) exceeded all null values (empirical p<0.001).
-Gaussian-feature controls yielded AUC 0.503 $\pm$ 0.031.
-
-\subsection{SNWA: An Interpretable Workload Axis Matches Full-Model Performance}
-
-Table~\ref{tab:snwa} shows SNWA performance across feature-set sizes on the
-MAT dataset (full 805 features). All models used balanced class weights throughout
-to handle the class imbalance in MAT (25.3% workload, 74.7% rest). SNWA
-with $K=8$ features achieved the best balance, approaching the full SVM
-(AUC 0.761 vs 0.796; DeLong test: $z=1.42$, p=0.15, not significantly
-different). SNWA's F1 of 0.567 exceeded the SVM's 0.519, and it had
-superior calibration (Brier score 0.184 vs 0.205 for SVM).
-
-\begin{table}[ht]
-\centering
-\caption{SNWA performance as a function of the number of selected features $K$
-(MAT dataset, N=36, full 805-feature set). The 8-feature SNWA (K=8) achieves
-AUC 0.761, not significantly different from the full SVM RBF (AUC 0.796,
-DeLong $z=1.42$, $p=0.15$), while using only 8 interpretable features per
-window. Brier score improves from 0.205 (SVM) to 0.184 (SNWA K=8).
-95\% subject-bootstrap CIs in brackets.}
-\label{tab:snwa}
-\small
-\adjustbox{max width=\textwidth}{%
-\begin{tabular}{crrrrrr}
-\toprule
-$K$ & Accuracy & Sensitivity & Specificity & F1 & ROC-AUC & Brier \\
-\midrule
-3 & 0.708 & 0.564 & 0.757 & 0.495 & 0.688 & 0.204 \\
-5 & 0.725 & 0.595 & 0.769 & 0.523 & 0.723 & 0.194 \\
-8 & 0.744 & 0.662 & 0.772 & 0.567 & 0.761 & 0.184 \\
-12 & 0.742 & 0.621 & 0.783 & 0.549 & 0.738 & 0.188 \\
-20 & 0.742 & 0.597 & 0.791 & 0.540 & 0.726 & 0.188 \\
-\midrule
-\multicolumn{7}{l}{\small SVM RBF (full 805 features): AUC 0.796 [0.747, 0.857], Brier 0.205} \\
-\multicolumn{7}{l}{\small Subject bootstrap (2000 resamples over N=36 subjects).} \\
+Failure & 18 & 1134 & 7 & -0.0176745 & 0.577865 & -0.0146273 \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-\begin{figure}[ht]
+\begin{table}[ht]
 \centering
-\begin{subfigure}{0.48\linewidth}
-\centering
-\includegraphics[width=\linewidth]{../figures/figure_snwa_score_distribution.png}
-\caption{SNWA score distribution}
-\label{fig:snwa_a}
-\end{subfigure}
-\begin{subfigure}{0.48\linewidth}
-\centering
-\includegraphics[width=\linewidth]{../figures/figure_snwa_roc_by_k.png}
-\caption{ROC curves by $K$}
-\label{fig:snwa_b}
-\end{subfigure}
-\caption{SNWA operating characteristics on the MAT dataset (N=36).
-(A) SNWA score distribution across rest and workload conditions (K=8),
-showing substantial overlap consistent with the per-subject AUC variability.
-(B) ROC curves for SNWA with $K \in \{3, 5, 8, 12, 20\}$. K=8 provides the
-best balance (AUC 0.761), approaching full 805-feature SVM performance
-(AUC 0.796, $p=0.15$).}
-\label{fig:snwa}
-\end{figure}
-
-The 8 features selected most consistently across folds were: frontal theta/alpha
-ratio, frontal relative theta, parietal relative alpha, frontal Hjorth mobility,
-central theta/alpha ratio, occipital relative beta, frontal spectral entropy,
-and frontal absolute theta. All are neurophysiologically interpretable.
-
-\subsection{Feature Family Stability, Mutual Information, and Connectivity}
-
-Nested LOSO feature ranking (Figure~\ref{fig:stability}) showed that relative
-bandpower features appeared in the top 20 in 74\% of folds, time-domain
-morphology in 68\%, band ratios in 52\%, Hjorth parameters in 31\%, and
-connectivity/correlation features in only 4\%. This suggests that spectral
-features --- particularly relative bandpower and band ratios --- carry the
-most consistent cross-subject workload signal.
-
-Mutual information feature ranking confirmed this pattern: the top 5 features
-by MI were Fp1 absolute gamma (MI=0.076), Fp1 peak-to-peak amplitude, P4
-peak-to-peak, O2 peak-to-peak, and Fp2 peak-to-peak --- all frontal or
-posterior morphology measures. Connectivity features had near-zero MI with
-the label. Log-transforming bandpower features before LOSO did not improve
-performance (AUC 0.773 vs 0.798 for original), confirming that linear-scale
-bandpower already captures the discriminative information.
-
-Connectivity-only LOSO analysis (171 pairwise correlation features among 19
-EEG channels, excluding ECG and A2A1) yielded mean AUC 0.595 (equivalence test
-against chance p=0.127). This confirms that connectivity features, while
-theoretically appealing, do not carry discriminative workload signal in the
-MAT dataset, consistent with their low stability in nested feature selection.
+\caption{DS007262 frozen score summary by available ordinal workload level.}
+\label{tab:dslevels}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Difficulty range & Level & Mean score & Median score & N trials \\
+\midrule
+0.6--1.5 & 1 & -1.91867 & -2.05471 & 162 \\
+1.5--2.4 & 2 & -2.55800 & -2.17073 & 162 \\
+2.4--3.3 & 3 & -3.23046 & -2.59551 & 162 \\
+3.3--4.2 & 4 & -2.65596 & -3.08935 & 162 \\
+4.2--5.1 & 5 & -3.40334 & -2.73853 & 162 \\
+5.1--6.0 & 6 & -2.82036 & -2.62951 & 162 \\
+6.0--6.9 & 7 & -2.44009 & -2.35241 & 162 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.82\linewidth]{../figures/figure_feature_stability_barplot.png}
-\caption{Feature family stability across LOSO folds on the MAT dataset
-(N=36). Spectral features (theta/alpha ratio, bandpower) and morphological
-features (Hjorth parameters) are the most consistently selected families
-across folds (mean stability $>0.80$). Connectivity features show low
-stability ($<0.30$), consistent with their low discriminative utility in
-LOSO classification. Error bars: 95\% CI across folds.}
-\label{fig:stability}
-\end{figure}
-
-\subsection{Learning Curve, Power Analysis, and Model Stability}
-
-A learning curve (Figure~\ref{fig:learning}A) training on 4--32 subjects
-showed that the mean test AUC estimate stabilizes at approximately 16--20
-training subjects, but the per-subject variance remains large (95\% CI
-spanning ~0.4 AUC at all training sizes). This indicates that while the
-mean estimate is stable, N=36 is insufficient for stable
-individual-differences analyses.
-
-A power analysis (Figure~\ref{fig:learning}B) confirms that N=36 provides
-97\% power to detect the frontal theta effect (d=0.84) at $\alpha=0.05$,
-but N=86 would be needed for 80\% power to detect a resting-predictor
-correlation of $\rho=0.30$ (typical for EEG~behavior associations). The
-N=18 in DS007262 provides only 62\% power to detect a moderate effect
-(d=0.50), which likely contributes to the null classification result in
-that dataset.
-
-Repeating LOSO with 10 different random subject orderings
-yielded virtually identical mean AUC (0.829 $\pm$ 0.000), confirming that
-LOSO is deterministic with respect to subject partitioning and that
-performance variance arises almost entirely from subject heterogeneity,
-not from algorithmic randomness. Five classifier families (SVM, logistic
-regression, gradient boosting, random forest, XGBoost) were tested with
-SVM~RBF pre-specified as the primary classifier. The primary finding
-(above-chance LOSO AUC) holds across all families.
-
-Linear SVM (AUC 0.820 $\pm$ 0.166, full MAT feature set) performed
-comparably to RBF SVM (0.796), confirming that non-linear interactions
-are not necessary for accurate workload classification. Linear models
-provide feature weights directly interpretable without post-hoc methods.
-
-A specification curve analysis (Supplementary Figure~S3) tested the
-robustness of the frontal theta effect across six analysis choices
-(theta/alpha ratio, theta/beta ratio, absolute alpha power at F3/F4).
-All six specifications showed significant effects in the expected
-direction (mean d=0.58, all $p<0.02$), confirming that the theta/alpha
-modulation is robust to reasonable analysis variations even though
-absolute theta power showed a weaker effect in the pre-computed feature
-set due to different preprocessing parameters.
-
-\begin{figure}[ht]
-\centering
-\begin{subfigure}{0.48\linewidth}
-\includegraphics[width=\linewidth]{../figures/mv4_learning_curve.png}
-\caption{Learning curve}
-\label{fig:learning_a}
-\end{subfigure}
-\begin{subfigure}{0.48\linewidth}
-\includegraphics[width=\linewidth]{../figures/figure_power_analysis.png}
-\caption{Power analysis}
-\label{fig:learning_b}
-\end{subfigure}
-\caption{(A) Learning curve for logistic regression LOSO (MAT, N=36,
-805 features). Mean test AUC stabilizes at ${\sim}16$--20 training
-subjects, but 95\% CI spans ${\sim}0.4$ AUC at all training sizes.
-(B) Power analysis for paired t-test. N=36 provides 97\% power for
-the frontal theta effect (d=0.84). N$\ge$200 is needed for robust
-individual-differences analyses ($\rho\le0.30$).}
-\label{fig:learning}
-\end{figure}
-
-\subsection{Near-Transfer Stress Test: SNWA Generalizes to DS007262}
-
-Figure~\ref{fig:transfer} shows cross-dataset transfer performance. Full
-logistic regression transfer was at chance for most directions (AUC
-0.47--0.51), with STEW $\rightarrow$ MAT being the only direction exceeding
-chance (AUC 0.607). However, the Subject-Normalized Workload Axis (SNWA)
-significantly generalized to DS007262: SNWA K5 achieved AUC 0.618
-(t=3.25, p=0.005) and SNWA K8 achieved AUC 0.613 (t=3.50, p=0.003). The
-full logistic regression model on the same data did not reach significance
-(AUC 0.556, p=0.079). This suggests that SNWA's subject-normalization
-procedure---median/MAD normalization within each subject followed by
-effect-size-weighted feature aggregation---captures individual-level
-workload modulation that survives cross-dataset recording differences,
-whereas unnormalized classifiers are dominated by dataset-specific features.
-
-Notably, MAT+STEW $\rightarrow$ DS007262 full-model transfer was at chance
-(AUC 0.500), suggesting that the channel intersection constraint discards
-informative channels (Fz, Cz) that carry generalizable workload signal.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.62\linewidth]{../figures/figure_external_validation_comparison.png}
-\caption{Cross-dataset transfer ROC-AUC matrix. Full logistic regression
-transfer is at or near chance for all directions (AUC 0.47--0.51),
-demonstrating that 8-channel intersection features are insufficient for
-dataset-independent classification. The Subject-Normalized Workload Axis
-(SNWA) shows significant generalization to DS007262 (AUC 0.618,
-$p=0.005$), suggesting that subject-normalized feature aggregation captures
-individual-level workload modulation that survives cross-dataset recording
-differences. Note: SNWA requires a baseline recording from each target
-subject---this is within-subject normalization applied at test time, not
-true zero-shot cross-dataset transfer.}
-\label{fig:transfer}
-\end{figure}
-
-\subsection{Subject-Level Variability}
-
-Per-subject LOSO AUC on the MAT dataset (805 features, logistic regression)
-ranged from 0.34 to 1.00 (median 0.86, IQR 0.76--0.94, mean $\pm$ SD:
-0.83 $\pm$ 0.16). Two subjects (5.6\%) were strictly at or below chance
-(AUC $\leq$ 0.5), and three subjects (8.3\%) had AUC below 0.60
-(Figure~\ref{fig:variability}A). The three least classifiable subjects---Subject08
-(AUC 0.34), Subject31 (AUC 0.39), and Subject35 (AUC 0.55)---were
-consistently at chance across all five classifier families (SVM, logistic
-regression, gradient boosting, random forest, XGBoost), indicating that
-their poor performance reflects a genuine lack of discriminable EEG
-workload signal rather than a failure of a specific algorithm.
-
-Exploratory resting-state analyses were used only to assess whether baseline
-variance might affect classifiability. In MAT, no resting feature survived
-FDR correction across the 1,611 tested predictors at $q=0.05$, and a
-leave-one-subject-out resting-screen model did not significantly predict
-per-subject AUC ($\rho=0.323$, $p=0.054$). STEW showed one FDR-corrected
-association (occipital theta), but the broader predictor pattern did not
-replicate as a stable biomarker family across datasets. These analyses
-therefore cannot establish a definitive baseline phenotype; they only show
-that baseline variance plausibly affects classifiability and should be tested
-in a fully powered, pre-registered study.
-
-Figure~\ref{fig:topo} shows the electrode contribution map derived from
-feature-level effect sizes (Cohen's $d_z$). Parietal electrodes showed the
-strongest workload modulation (mean $d_z = 0.79$), followed by occipital
-(0.77) and frontal (0.76). This is consistent with the dual fronto-parietal
-nature of arithmetic cognition: frontal theta engagement and parietal alpha
-suppression both contribute discriminative information.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.5\linewidth]{../figures/figure_topographic_map.png}
-\caption{Electrode importance map based on Cohen's $d_z$ effect sizes from
-feature-level paired statistics (MAT, N=36). Parietal electrodes (P3, P4, Pz)
-show the strongest workload modulation (mean $d_z = 0.79$), consistent with
-alpha suppression, while frontal electrodes show intermediate effects
-(mean $d_z = 0.76$) driven by theta augmentation. Color scale: $d_z$ values
-from paired comparisons of all features at each electrode.}
-\label{fig:topo}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\linewidth]{../figures/figure_subject_variability.png}
-\caption{Subject-level variability in LOSO classification (MAT, N=36,
-805 features, logistic regression). (A) Per-subject LOSO AUC across three
-classifier families (logistic regression, SVM-RBF, XGBoost). Dashed line
-at AUC 0.6 marks the classifiability threshold; 3 of 36 subjects (8.3\%)
-fall below this threshold consistently across all families. (B) LOOCV
-prediction of per-subject AUC from resting EEG (PCA + elastic net).
-Prediction not significant ($\rho=0.323$, $p=0.054$). (C) Top 15 resting
-features by Spearman $\rho$ with per-subject AUC. None survived FDR
-correction; results are exploratory.}
-\label{fig:variability}
+\includegraphics[width=0.72\linewidth]{../../results/ds007262_confirmatory/figures/ds007262_level_curve.png}
+\caption{Frozen DS007262 graded workload scores. The fitted exploratory
+MAT/STEW model did not produce a positive monotonic score increase across
+the available DS007262 difficulty levels.}
+\label{fig:ds}
 \end{figure}
 
 \section{Discussion}
 
-\subsection{Biological Interpretation}
+\subsection{What the Verified Analyses Support}
 
-These results show that EEG workload decoding depends on the representational
-geometry of the signal, not only on classifier choice. Random-window validation
-can produce optimistic accuracy because training and test folds share
-participant-specific structure. When subjects are held out, accuracy declines,
-indicating that conventional sensor-level features encode stable individual
-differences that can overwhelm the task-related workload displacement. The
-central generalization problem is therefore a form of manifold alignment:
-models must recover the direction of cognitive-effort change while ignoring
-subject-specific baseline geometry.
+The verified analyses support a limited but useful conclusion: subject-level
+baseline z-scoring improved exploratory workload decoding in MAT and STEW
+relative to absolute features and mean subtraction. The effect was strongest
+in MAT and was also present in STEW. Negative controls showed that the
+observed out-of-fold scores were associated with labels in the exploratory
+datasets.
 
-The spectral findings remain neurobiologically interpretable under this
-framing. Frontal theta is commonly associated with medial frontal and
-frontoparietal control-network engagement during cognitive control
-\cite{cavanagh2014}, who reported that mid-frontal theta is modulated by both
-cognitive control demands (Cohen's d=0.71, meta-analysis across 122 studies)
-and anxiety. Concurrent alpha suppression likely reflects thalamocortical
-disinhibition and reduced idling of posterior cortical networks
-\cite{klimesch1999}. That the theta/alpha ratio emerges as the single most
-discriminative feature across datasets supports Sridhar et al.\
-\cite{sridhar2022}'s conclusion that this ratio captures the balance between
-control engagement (theta) and cortical idling (alpha) more effectively than
-either band alone. These are sensor-level signatures consistent with the
-proposed mechanisms; source localization would be required for direct
-anatomical attribution.
+The analyses do not support a stronger claim that the model recovered a
+universal or invariant workload axis. The coefficient-direction correlations
+between MAT and STEW were near zero. Most importantly, the frozen DS007262
+graded test failed the prespecified monotonicity criterion. A model can
+therefore classify rest-versus-workload labels in exploratory datasets while
+still failing to rank graded workload levels in an external dataset.
 
-Subject variability remains an important constraint on the workload axis, but
-the present resting-state screens cannot define a reliable biological
-phenotype. The strongest resting associations were underpowered, did not
-survive the relevant correction in MAT, and did not replicate as a stable
-cross-dataset biomarker family. The appropriate conclusion is therefore
-limited: baseline variance affects classifiability and should be modeled in
-future prospective studies, but the current data do not justify a definitive
-subject-screening rule.
+\subsection{Interpretation of the Baseline-Relative Workload Transfer Hypothesis}
 
-The distinction between workload, mental fatigue, and anxiety is important because all three
-modulate overlapping EEG signatures. Borghini et al.\ \cite{borghini2014} showed that prolonged
-cognitive task performance produces theta increases and alpha decreases similar to those we
-observe, and Cavanagh and Shackman \cite{cavanagh2014} documented anxiety-related theta
-augmentation. Our multi-dataset design partially addresses this confound by including datasets
-with different task durations and designs. The consistency of the theta effect across these
-designs argues against a pure fatigue or anxiety explanation. Our covariate analysis further
-shows that demographic and performance factors (age, gender, number of subtractions) do not
-predict per-subject classification AUC. However, we cannot fully dissociate these constructs
-without subjective workload and fatigue ratings (NASA-TLX \cite{hart1988}), physiological
-measures (heart rate variability, pupil dilation), or a task manipulation that independently
-varies workload and arousal. A definitive dissociation requires an experiment where workload,
-fatigue, and anxiety are independently manipulated within subjects---a design none of the three
-datasets support. This limitation is shared with the broader EEG workload literature.
+The Baseline-Relative Workload Transfer Hypothesis was partly supported and
+partly falsified. The exploratory part was supported: baseline-relative
+z-scoring improved LOSO decoding in MAT and STEW. The confirmatory transfer
+part was not supported: the frozen model did not produce a positive monotonic
+relationship with DS007262 difficulty. The correct interpretation is not that
+baseline-relative calibration is useless, but that the current implementation
+does not establish graded cross-dataset transfer.
 
-\subsection{Comparison to Prior MAT Studies}
+Several non-exclusive explanations are compatible with the failure, but the
+present analyses do not adjudicate among them. DS007262 differs from MAT and
+STEW in task structure, event timing, difficulty design, and recording
+context. The channel intersection may omit useful electrodes. Rest-versus-task
+classification may also differ from ranking multiple arithmetic difficulty
+levels. These are methodological boundary conditions, not verified
+neurobiological mechanisms.
 
-Previous analyses of the PhysioNet MAT dataset reported substantially higher accuracy than our
-LOSO results. Hakimi et al.\ \cite{hakimi2023} achieved 91.7\% accuracy using convolutional
-neural networks with subject-dependent splits---approximately 21 points higher than our
-subject-wise SVM (71.0\%) on the 10-channel intersection. Nguyen and Huynh \cite{nguyen2025}
-reported 85.7\% F1 using KNN with random-window validation. These discrepancies are consistent
-with the data leakage documented by Lotte et al.\ \cite{lotte2018}: when the same subject's
-windows appear in both training and test sets, the classifier can learn subject-specific
-recording artifacts rather than task-general neural signals. Our LOSO approach, by contrast,
-estimates how well the model generalizes to an entirely unseen participant, which is the
-relevant metric for real-world BCI and human--machine interaction applications. Even with the
-full 805-feature set, our MAT LOSO AUC of 0.796 is substantially lower than prior reports using
-subject-dependent splits, underscoring the importance of strict subject-wise validation.
+\subsection{Resting Phenotyping}
 
-\subsection{Methodological Contributions}
-
-The multi-dataset replication framework addresses a critical gap in EEG
-workload research by evaluating whether workload features survive changes in
-participants, tasks, and recording systems. Within-dataset LOSO performance
-varied substantially across datasets: STEW (consumer 14-channel Emotiv)
-yielded AUC 0.800, while DS007262 (research-grade 19-channel) yielded
-chance-level AUC 0.467 with the 8-channel intersection. This counterintuitive
-result suggests that task design, class balance, recording consistency, and
-baseline state structure can affect classifiability more strongly than
-hardware grade alone. STEW's superior performance likely reflects its balanced
-classes (50\% workload) and within-subject trial structure, whereas MAT's
-blocked design (25\% workload class) increases the opportunity for
-subject-identity structure to dominate.
-
-Cross-dataset near-transfer for full models was at chance levels (AUC
-0.47--0.51), demonstrating that raw 8-channel sensor-space features are
-insufficient for dataset-independent workload classification by conventional
-models. SNWA significantly generalized to DS007262 (AUC 0.618, p=0.005),
-indicating that subject-normalized feature displacements preserve some
-workload-relevant structure across recording contexts. This is the key
-methodological contribution: the transferable signal appears more clearly
-after subject-specific baselines are removed and features are expressed as
-directions of within-subject state change. The channel intersection approach,
-while necessary for cross-dataset comparison, discards informative channels
-(Fz, Cz) that carry generalizable signal, as shown by the gap between
-full-feature MAT (AUC 0.796) and intersection-reduced MAT (AUC 0.709).
-Multiple transfer confounders remain--electrode configurations, task designs,
-populations, reference montages, and instructions--and disentangling them
-requires prospective multi-site collection with a standardized protocol.
-
-SNWA's ability to approach full-model performance with 8 interpretable
-features on the full feature set (AUC 0.761 vs 0.796) and to generalize to an
-unseen dataset has practical and theoretical implications. Practically, a
-compact workload axis based on frontal theta/alpha ratio, relative theta, and
-Hjorth mobility could support low-channel real-time cognitive-state
-estimation after per-subject baseline calibration. Theoretically, the result
-suggests that cognitive effort is not best represented by absolute scalp
-feature values, but by a subject-normalized displacement along a partially
-shared latent axis that captures fronto-hippocampal theta recruitment against
-thalamocortical alpha disinhibition.
+Exploratory resting EEG predictors should not be treated as a validated
+baseline phenotype. The prior audit found that no MAT resting feature
+survived FDR correction at $q = 0.05$ across the tested predictors, and the
+resting-screen model did not establish a reliable subject-level prediction
+rule. Resting EEG may still be useful for calibration, as shown by the
+z-scoring results, but the current repository does not support screening
+participants or explaining low classifiability by a specific resting-state
+biomarker.
 
 \subsection{Limitations}
 
-Eight limitations merit explicit discussion. First, the three datasets use different reference
-electrodes (MAT: unspecified online reference; STEW: Emotiv CMS/DRL active reference;
-DS007262: linked ears). Ratio measures (theta/alpha, theta/beta) are reference-independent
-because the reference contribution cancels in division, and the across-dataset consistency of
-the theta/alpha modulation supports this. However, absolute bandpower values are
-reference-dependent \cite{klimesch1999}. Re-referencing to REST or average reference would
-strengthen cross-dataset comparability and is recommended for future multi-dataset analyses.
+First, MAT and STEW were used for exploratory model selection and should not
+be interpreted as independent confirmation. Second, DS007262 provided only
+seven non-tutorial difficulty ranges in the analyzed event files, although
+the dataset is described as an 8-level arithmetic task. The analysis reported
+the available levels rather than relabeling or imputing an absent level.
+Third, the negative-control permutations were applied to nested out-of-fold
+scores and did not retrain models for every null draw. Fourth, coefficient
+stability was tested only at the sensor-feature level; no source localization
+or anatomical inference was performed. Fifth, unverified oscillatory coupling
+analyses were removed because they were not part of the executed confirmatory
+evidence.
 
-Second, per-subject variability is high: 8\% of MAT participants had AUC below 0.6, and
-per-subject AUC ranged from 0.34 to 1.00. Our exploratory resting-EEG prediction model did
-not reach significance (Spearman $\rho = 0.32$, p = 0.054, MAT LOOCV), and no individual
-resting feature survived FDR correction in MAT. Only one feature survived FDR correction in
-STEW (occipital theta, q = 0.005), and this did not establish a replicated biomarker family.
-The baseline cognitive-phenotyping hypothesis should therefore be treated as a future target:
-high resting Hjorth complexity and disrupted temporal--occipital connectivity may indicate
-baseline hyperarousal or default-mode network interference that partially saturates the
-frontoparietal network before task onset, making the task-induced delta difficult to resolve.
-This mechanism requires a fully powered prospective study (N$\ge$200) with pre-registered
-resting predictors, source-localized metrics, and independent validation before any screening
-or calibration rule can be recommended. The 8--10\% low-classifiability rate is consistent
-with the 20\% estimate from the BCI literature \cite{lotte2018}, though the lower bound may
-reflect our lenient AUC $>0.6$ threshold versus typical within-subject criteria.
+\section{Conclusion}
 
-Third, from a clinical utility perspective, the best-performing model (STEW AUC 0.800) achieves
-this at a default probability threshold of 0.5. At clinically meaningful operating points---90\%
-sensitivity or 90\% specificity---the false positive or false negative rates would be considerably
-higher. For safety-critical applications (e.g., air traffic control monitoring), a false negative
-rate above 10\% is typically unacceptable. Our classifiers do not meet this benchmark: at 90\%
-sensitivity, specificity drops to approximately 60\%. Decision curve analysis and net-benefit
-calculations are needed before any clinical deployment recommendation can be made.
+Baseline-relative EEG calibration improved exploratory rest-versus-workload
+decoding in MAT and STEW, with z-scored models achieving ROC-AUC values of
+0.865995 and 0.791896 in the best exploratory configurations. However, the
+feature-direction analysis did not demonstrate a stable shared signed axis,
+and the frozen DS007262 graded external test failed
+($\rho = -0.0176745$, one-sided $p = 0.577865$). The manuscript therefore
+supports baseline-relative calibration as an exploratory method, but it does
+not support claims of invariant workload transfer or universal EEG workload
+geometry.
 
-Fourth, cross-dataset transfer for full models was at chance (AUC 0.47--0.51). SNWA achieved
-significant transfer (AUC 0.618, p = 0.005) but requires a baseline recording from each target
-subject---this is within-subject normalization at test time, not true zero-shot transfer. The
-distinction between these two claims is important: the negative full-model result shows that EEG
-workload features are highly domain-specific, while SNWA's success demonstrates that
-subject-normalized features capture some cross-dataset signal.
+\section{Data and Code Availability}
 
-Fifth, this is a secondary analysis of existing public data (N$\le$48 per dataset). Prospective
-collection with standardized protocols across multiple sites and N$\ge$200 per dataset would
-provide stronger evidence. Sixth, overlapping EEG windows (4~s, 50\% overlap) introduce temporal
-correlation that inflates the effective sample size; our subject-level bootstrap partially
-addresses this by resampling subjects rather than windows \cite{lotte2018}. Seventh, the 8-channel
-intersection discards informative channels (Fz, Cz) that carry workload information
-\cite{gevins1997}. The gap between full-feature MAT (AUC 0.796) and intersection-reduced MAT
-(AUC 0.709) confirms this cost.
+The original datasets are available from PhysioNet EEGMAT
+\cite{physionet_eegmat}, STEW \cite{stew_dataset}, and OpenNeuro DS007262
+\cite{openneuro_ds007262}. The analysis code, frozen configuration, and
+generated validation outputs are stored in the project repository. The key
+executed summaries are \texttt{THEORY\_VALIDATION\_RESULTS.md} and
+\texttt{results/ds007262\_confirmatory/DS007262\_CONFIRMATORY\_RESULTS.md}.
 
-Eighth, source localization was not performed. Our anatomical claims about anterior cingulate and
-prefrontal involvement are based on the existing literature and on the well-established
-generators of frontal midline theta, but are not directly supported by source analysis. Scalp
-EEG cannot definitively attribute frontal theta power increases to specific cortical sources
-without inverse modeling. Source localization using sLORETA or MNE-Python on the MAT 19-channel
-data would allow anatomical attribution and is a recommended direction for future work.
+\section{Ethics Statement}
 
-\subsection{Future Directions}
+This work is a secondary analysis of publicly available, de-identified EEG
+datasets. No new human-subject data were collected. The original datasets
+were collected under their respective ethics approvals and consent
+procedures. The present work is intended for computational neuroscience and
+methodological validation, not clinical diagnosis or individual assessment.
 
-The results suggest several concrete next steps. First, a properly powered prospective study
-(N$\ge$200 per dataset, standardized 10-20 montage, average reference, pre-registered analysis
-plan) is needed to establish EEG workload classification benchmarks. Such a study should include
-subjective workload ratings (NASA-TLX) and physiological co-registration (HRV, pupillometry) to
-dissociate workload from anxiety and fatigue---a confound the current datasets cannot fully
-resolve.
-
-Second, domain adaptation methods remain promising for cross-dataset transfer. Approaches such
-as subspace alignment \cite{jayaram2016} and CORAL should be tested with the full channel sets
-rather than the 8-channel intersection used here.
-
-Third, source localization using standardized low-resolution electromagnetic
-tomography (sLORETA) or MNE inverse modeling on the MAT 19-channel data would
-allow stronger anatomical attribution of the frontal theta effect to candidate
-medial frontal and prefrontal generators.
-
-Fourth, future models should explicitly learn subject-invariant latent
-representations. Contrastive objectives, domain-adversarial training,
-source-informed features, and state-space models may better separate the
-cognitive-effort trajectory from subject-specific topological constraints.
-Finally, closed-loop experiments where task difficulty adapts to real-time
-theta power could establish causal relationships between theta oscillations
-and cognitive performance, and clinical populations with attentional deficits
-(ADHD, mild cognitive impairment) may show altered theta dynamics.
-
-\subsection{Ethics Statement}
-
-This work is a secondary analysis of publicly available, de-identified EEG datasets. No new
-human-subject data were collected. All original datasets were collected with informed consent
-under their respective institutional review board approvals. The PhysioNet EEGMAT dataset
-(doi:10.13026/C2JQ1P) was collected under ethics approval from the Institute of Neurology,
-Psychiatry and Narcology of the National Academy of Medical Sciences of Ukraine. The STEW
-dataset was approved by the Nanyang Technological University Institutional Review Board.
-OpenNeuro DS007262 (doi:10.18112/openneuro.ds007262.v1.0.6) was approved by local ethics
-committees at its originating institution. As secondary analysis of de-identified public data,
-this work does not require separate IRB approval under 45 CFR 46.104(d)(4). The results are
-intended for basic neuroscience and computational methodology, not clinical diagnosis,
-medical-device development, or individual cognitive assessment. Data use complies with the
-original datasets' terms of use.
-
-\subsection{Data and Code Availability}
-
-The original raw datasets are publicly available from: PhysioNet EEGMAT at
-\url{https://doi.org/10.13026/C2JQ1P}, STEW at \url{https://huggingface.co/datasets/stew},
-and OpenNeuro DS007262 at \url{https://doi.org/10.18112/openneuro.ds007262.v1.0.6}. The
-derived feature table (SHA-256: A240EB2080E0BB8422C61856305673FD4D6ACBAC828228AED6C62BFE4CB0142D)
-is included in the repository at outputs\_reproduced/features/eeg\_features.csv. All analysis
-code is at \url{https://github.com/agangarapu/eeg-workload-replication}. Tables, figures, and
-reproducibility reports are under outputs/, outputs\_phd\_revision/, and
-results/multi\_dataset/. Paper source (LaTeX) is in paper/. A requirements.txt with pinned
-package versions and a Makefile for full reproduction are in the repository root. The repository
-also includes SHA-256 checksums for all output files (SHA256SUMS.txt).
-
-\subsection{Acknowledgments}
-
-The authors thank the creators of the PhysioNet EEGMAT, STEW, and OpenNeuro DS007262 datasets
-for making their data publicly available. Computational resources were provided by the authors'
-personal computing infrastructure. No external funding was received for this work.
-
-\subsection{Author Contributions}
+\section{Author Contributions}
 
 Abhijay Gangarapu and Arush Ravipati contributed equally to the conception,
 analysis, interpretation, and manuscript preparation for this study.
 
-\subsection{Competing Interests}
+\section{Conflict of Interest}
 
-The authors declare no competing interests. The authors have no financial relationship with any
-EEG hardware company (Emotiv, g.tec, BrainProducts, etc.), no relationship with PhysioNet,
-OpenNeuro, or STEW data providers, and no plans to commercialize SNWA.
+The authors declare no commercial or financial relationships that could be
+construed as a potential conflict of interest.
 
+\section{Acknowledgments}
+
+The authors thank the creators of the PhysioNet EEGMAT, STEW, and OpenNeuro
+DS007262 datasets for making their data publicly available.
 
 \input{references}
 
