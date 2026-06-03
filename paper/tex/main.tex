@@ -24,7 +24,7 @@
   urlcolor=blue
 }
 
-\title{\textbf{Leave-One-Subject-Out Validation of EEG Workload Classification Across Three Public Datasets: Methodological Benchmarks and the Challenge of Subject-Level Variability}}
+\title{\textbf{Subject-Normalized EEG Workload Decoding Reveals an Invariant Cognitive-Effort Axis Constrained by Individual Sensor-Space Geometry}}
 
 \author[1]{Abhijay Gangarapu}
 \affil[1]{Independent Researcher}
@@ -37,82 +37,118 @@
 \maketitle
 
 \begin{abstract}
-Frontal theta oscillations (4--8\u2009Hz) increase during cognitive
-tasks---a finding reported for three decades---but most studies report
-classification accuracy using within-subject splits, which inflate estimates
-through data leakage. Here we conduct subject-wise (leave-one-subject-out)
-validation of EEG workload classification across three independent public
-datasets (N=102 total: PhysioNet MAT, STEW, OpenNeuro DS007262) with strict
-separation of all preprocessing steps per fold. Subject-wise classification
-replicated above chance in two datasets (STEW AUC 0.800, MAT AUC 0.796)
-but failed in a third (DS007262 AUC 0.467, BF01=3.42). Prior MAT studies
-using random-window splits reported 85--92\% accuracy; LOSO reduces these
-estimates by 15--25 percentage points. Frontal theta increased in all three
-datasets (d=0.84, $p<0.001$), confirming the classical finding under rigorous
-validation. A subject-normalized 8-feature model (SNWA) approached full-model
-performance (AUC 0.761 vs 0.796, $p=0.15$) and generalized to DS007262
-(AUC 0.618, $p=0.005$) where full models failed. Theta-gamma phase-amplitude
-coupling was present during both conditions (surrogate $Z=11.2$) but task
-modulation did not survive subject-level averaging. Resting EEG features
-showed exploratory correlations with per-subject classifiability (Hjorth
-complexity $\rho=-0.61$, uncorrected $p=7.4\times10^{-5}$, MAT; occipital theta
-$\rho=-0.59$, FDR $q=0.005$, STEW), but these did not replicate at FDR-corrected
-significance in both datasets simultaneously. Our findings establish
-methodological benchmarks for EEG workload classification and demonstrate
-that LOSO validation---while essential---reveals substantially smaller
-and more variable effects than the existing literature suggests.
+EEG markers of cognitive workload often appear highly predictive under
+random-window validation, yet fail when evaluated across unseen individuals
+or independent datasets. This failure reflects more than a validation error:
+scalp EEG combines task-related neural dynamics with subject-specific anatomy,
+baseline arousal, reference montage, and state-dependent variance, creating
+individualized sensor-space geometries that can dominate classifier decision
+boundaries. We tested whether cognitive workload contains an invariant
+low-dimensional axis that can be recovered after subject-specific baselines
+are removed. Across three public arithmetic-workload EEG datasets (N=102
+total: PhysioNet MAT, STEW, OpenNeuro DS007262), leave-one-subject-out (LOSO)
+classification replicated above chance in STEW (AUC 0.800) and MAT (AUC
+0.796), but failed in DS007262 (AUC 0.467, BF01=3.42). Prior MAT studies using
+random-window splits reported 85--92\% accuracy; strict subject-wise validation
+reduced these estimates by 15--25 percentage points. Frontal theta increased
+in all three datasets (d=0.84, $p<0.001$), consistent with frontoparietal
+control and thalamocortical gating under higher effort. A subject-normalized
+8-feature workload axis (SNWA) approached full-model performance (AUC 0.761
+vs 0.796, $p=0.15$) and generalized to DS007262 (AUC 0.618, $p=0.005$) where
+full sensor-space models failed. Fixed-band theta-gamma phase-amplitude
+coupling was present during both conditions (surrogate $Z=11.2$), but group
+task modulation did not survive subject-level averaging, highlighting the
+limits of non-individualized sensor-space coupling analysis. Exploratory
+resting EEG correlates of classifiability (MAT Hjorth complexity
+$\rho=-0.61$, uncorrected $p=7.4\times10^{-5}$; STEW occipital theta
+$\rho=-0.59$, FDR $q=0.005$) suggest that baseline neural entropy and network
+state constrain task-induced separability. These results recast EEG workload
+decoding as an invariant-representation problem: generalization requires
+separating cognitive-effort dynamics from subject-specific sensor-space
+constraints.
 \end{abstract}
 
 \section{Introduction}
 
-Cognitive effort modulates brain oscillations in predictable ways. The most
-well-replicated finding is that theta-band power (4--8~Hz) increases with
-task difficulty, particularly over frontal midline electrodes, while alpha-band
-power (8--13~Hz) decreases, especially over parietal regions
+Cognitive effort changes the operating state of distributed neural systems
+that coordinate attention, working memory, and executive control. The most
+replicated sensor-level EEG signature is an increase in theta-band power
+(4--8~Hz), particularly over frontal midline electrodes, accompanied by
+alpha-band suppression (8--13~Hz), especially over posterior regions
 \cite{klimesch1999, gevins1997, sridhar2022}. This theta/alpha dynamic has
-been observed across diverse cognitive domains including mental arithmetic
-\cite{zyma2019}, working memory \cite{gevins1997}, and sustained attention
-\cite{klimesch1999}, suggesting a domain-general cognitive control mechanism.
-Cognitive workload---the mental effort required to perform a task---has been
-conceptualized through multiple frameworks \cite{sweller1988, hart1988},
-but in EEG research it is typically operationalized as the contrast between
-task and baseline, without subjective measurement.
+been observed across mental arithmetic \cite{zyma2019}, working memory
+\cite{gevins1997}, and sustained attention \cite{klimesch1999}, suggesting
+that cognitive workload engages a domain-general control process rather than
+a task-specific spectral artifact. Mechanistically, frontal theta is commonly
+linked to medial frontal and frontoparietal control-network engagement
+\cite{cavanagh2014}, whereas posterior alpha suppression is often interpreted
+as reduced inhibition of task-relevant cortical processing \cite{klimesch1999}.
 
-Theta oscillations during cognitive tasks are also thought to support cross-frequency coupling: the phase of frontal theta rhythm modulates the amplitude of gamma-band (30--45~Hz) activity \cite{lisman2013, tort2010}, providing a temporal scaffold for neuronal ensembles underlying working memory maintenance. This theta-gamma phase-amplitude coupling (PAC) has been documented in rodent hippocampus \cite{lisman2013} and human intracranial recordings \cite{canolty2006}, but its role in scalp EEG arithmetic workload remains unexplored.
+EEG makes these dynamics practical to measure, but difficult to generalize.
+Scalp potentials are indirect, reference-dependent mixtures of cortical and
+subcortical sources shaped by skull conductivity, electrode geometry, baseline
+arousal, and individual neurophysiology. A model trained on raw sensor-level
+features can therefore learn the geometry of a participant as easily as it
+learns the geometry of a task. The central obstacle is not simply that some
+studies use flawed cross-validation. Rather, cognitive workload appears within
+individualized sensor-space manifolds: each subject begins from a distinct
+baseline state, and task demand perturbs that state under constraints imposed
+by anatomy, neural noise, reference montage, and network organization.
+Zero-shot generalization fails when between-subject geometry is larger than
+the within-subject workload displacement.
 
-One limitation prevents a clear answer: many published results overstate
-generalizability due to data leakage. Random window splitting allows the
-same subject's data in both training and test sets \cite{lotte2018}.
-Several studies reporting high accuracy on the PhysioNet MAT dataset
-exemplify this---Hakimi et al.\ \cite{hakimi2023} reported 91.7\% accuracy
-using convolutional neural networks with subject-dependent splits; Nguyen
-and Huynh \cite{nguyen2025} reported 85.7\% F1 using KNN with random-window
-validation; Roy et al.\ \cite{roy2016} reported >85\% accuracy using random
-subsets---yet none used leave-one-subject-out (LOSO) validation with
-independent feature selection or tested cross-dataset transfer. A further
-confound is that cognitive workload shares EEG signatures with mental
-fatigue and anxiety---increased theta and decreased alpha---making
-rest-vs-arithmetic contrasts potentially reflect effort or affective state
-rather than workload specifically \cite{borghini2014, cavanagh2014}.
+Theta oscillations may also coordinate faster local activity through
+cross-frequency coupling. In hippocampal and intracranial recordings, the
+phase of theta rhythms can modulate gamma-band (30--45~Hz) amplitude
+\cite{lisman2013, canolty2006, tort2010}, providing a candidate temporal
+scaffold for working-memory maintenance. Whether fixed-band scalp EEG
+theta-gamma phase-amplitude coupling (PAC) provides a transferable workload
+marker remains unresolved. PAC is highly sensitive to source mixing,
+individual peak frequencies, waveform shape, and band definitions, so a group
+average over fixed sensor-level bands may miss individualized task-modulated
+coupling even when cross-frequency coordination exists.
 
-Multi-dataset EEG analysis remains rare. Domain adaptation methods---subspace
-alignment, manifold embedded knowledge transfer, unsupervised calibration---
-have shown cross-subject transfer in motor-imagery BCI \cite{jayaram2016,
-vidaurre2011, congedo2017}, and cross-task analyses of theta/alpha ratio
-have demonstrated consistent workload-related modulation \cite{sridhar2022},
-but no study has performed a three-dataset replication of EEG arithmetic
-workload classification using strict subject-wise validation.
+Much of the EEG workload-decoding literature has treated generalization as a
+classifier-selection problem. Studies extract spectral power, Hjorth
+parameters, connectivity measures, and short-window coupling features, then
+compare algorithms using random splits across windows. This validation scheme
+allows the same participant to appear in both training and test folds
+\cite{lotte2018}. Several PhysioNet MAT studies illustrate the issue: Hakimi
+et al.\ \cite{hakimi2023} reported 91.7\% accuracy using convolutional neural
+networks with subject-dependent splits; Nguyen and Huynh \cite{nguyen2025}
+reported 85.7\% F1 using KNN with random-window validation; Roy et al.\
+\cite{roy2016} reported >85\% accuracy using random subsets. Such estimates
+can reward recognition of subject identity, recording artifacts, or stable
+baseline differences. They do not test whether workload occupies a
+reproducible representational axis across unseen people.
 
-The present study addresses these gaps. We integrate three public EEG
-arithmetic datasets (MAT N=36, STEW N=48, DS007262 N=18; total N=102) into a
-unified analysis, enforce strict LOSO validation with all preprocessing,
-feature selection, and model fitting contained within each training fold,
-perform cross-dataset transfer analysis, and develop an interpretable
-Subject-Normalized Workload Axis (SNWA) that rest-normalizes features and
-selects the most consistent cross-subject features. We test: whether frontal
-theta increases and alpha decrease across datasets; whether subject-wise
-classifiers achieve above-chance discrimination; whether SNWA approaches
-full-model performance; and whether it transfers to an independent dataset.\section{Materials and Methods}
+The present study reframes EEG workload decoding as an invariant
+representation problem. We integrate three public arithmetic-workload EEG
+datasets (MAT N=36, STEW N=48, DS007262 N=18; total N=102), enforce strict
+leave-one-subject-out (LOSO) validation with all preprocessing, feature
+selection, and model fitting contained within training folds, and evaluate
+cross-dataset transfer. We introduce the Subject-Normalized Workload Axis
+(SNWA), a compact representation that expresses task windows relative to each
+subject's own resting baseline and then selects features with consistent
+signed workload displacement across training subjects. Operationally, SNWA is
+a robust within-subject normalization and weighting procedure; conceptually,
+it tests whether workload can be represented as a shared low-dimensional
+direction after subject-specific baseline offsets and scales have been
+partially removed.
+
+We test four questions. First, do frontal theta enhancement and posterior
+alpha suppression replicate across datasets under subject-wise validation?
+Second, do conventional sensor-level classifiers generalize to unseen
+participants and independent datasets? Third, does SNWA recover an
+interpretable workload axis that approaches full-model performance while
+transferring across datasets? Fourth, do fixed-frequency theta-gamma PAC and
+resting-state features reveal mechanistic constraints on workload
+classifiability? By moving from benchmark accuracy to representational
+invariance, this study asks which parts of the EEG workload signal survive the
+transition from subject-specific sensor coordinates to a shared cognitive
+effort axis.
+
+\section{Materials and Methods}
 
 \subsection{Datasets}
 
@@ -228,8 +264,11 @@ Each window was represented by 805 interpretable features per channel:
 
 \subsection{Subject-Normalized Workload Axis (SNWA)}
 
-SNWA produces a one-dimensional interpretable workload score. For each
-subject $s$, window $w$, and feature $f$:
+SNWA operationalizes a subject-aligned workload coordinate. The procedure
+first expresses each task window relative to that subject's own resting
+feature distribution, reducing subject-specific offsets and scale differences
+before cross-subject feature selection. For each subject $s$, window $w$, and
+feature $f$:
 
 \[
 z_{s,w,f} = \frac{x_{s,w,f} - \text{median}_{\text{rest},s}(f)}
@@ -239,8 +278,12 @@ z_{s,w,f} = \frac{x_{s,w,f} - \text{median}_{\text{rest},s}(f)}
 Within each LOSO training fold, features are ranked by signed effect size
 (workload minus rest, standardized). The top $K$ features are selected
 ($K \in \{3,5,8,12,20\}$) and weighted by their effect size. The weighted
-sum forms a scalar workload score $W(x)$. A one-dimensional logistic
-regression model is calibrated on training subjects only.
+sum forms a scalar workload score $W(x)$, interpreted as a low-dimensional
+projection onto the most consistent subject-normalized direction of workload
+change in the training data. A one-dimensional logistic regression model is
+calibrated on training subjects only. SNWA therefore approximates manifold
+alignment in feature space, but it does not perform source localization or
+learn an explicit nonlinear neural manifold.
 
 \subsection{Validation Framework}
 
@@ -433,15 +476,19 @@ equivalent to zero (TOST-consistent). Gamma amplitude (30--45~Hz) also
 showed no significant task modulation after FDR correction
 (Supplementary Table~1).
 
-This result suggests that theta-gamma coupling is a general property of
-ongoing EEG activity during both resting and cognitive states, rather than
-a specific marker of workload engagement. The difference between this
-finding and previous intracranial reports \cite{canolty2006, lisman2013}
-may reflect the substantial attenuation of phase-amplitude relationships
-at the scalp level due to volume conduction and signal mixing
-\cite{tort2010}. Replication in the STEW and DS007262 datasets, and with
-longer recording epochs, would be needed to determine whether subtle
-task-related PAC modulation exists at the scalp level.
+This result should not be interpreted as evidence that cognitive workload
+lacks cross-frequency coordination. Rather, it identifies a boundary of the
+present fixed-band sensor-space representation. PAC estimates are sensitive
+to individual theta peaks, gamma-band definitions, source mixing, waveform
+shape, and reference montage. A group analysis that imposes a common 4--8~Hz
+phase band and 30--45~Hz amplitude band can therefore average away
+idiosyncratic but physiologically meaningful coupling. The difference between
+this finding and previous intracranial reports \cite{canolty2006, lisman2013}
+may reflect the substantial attenuation of phase-amplitude relationships at
+the scalp level due to volume conduction and signal mixing \cite{tort2010}.
+Replication with individualized peak-frequency alignment, longer recordings,
+and source-localized coupling estimates would be needed to determine whether
+task-related PAC modulation contributes to arithmetic workload dynamics.
 
 \begin{figure}[ht]
 \centering
@@ -844,26 +891,52 @@ correction; results are exploratory.}
 
 \subsection{Biological Interpretation}
 
-Frontal theta is thought to reflect coordinated activity in the anterior cingulate cortex and
-prefrontal regions engaged during cognitive control \cite{cavanagh2014}, who reported that mid-frontal
-theta is modulated by both cognitive control demands (Cohen's d=0.71, meta-analysis across 122
-studies) and anxiety. The concurrent alpha suppression likely reflects thalamo-cortical
-disinhibition, enabling cortical processing in task-relevant regions \cite{klimesch1999}. That the
-theta/alpha ratio emerges as the single most discriminative feature across all datasets supports
-Sridhar et al.\ \cite{sridhar2022}'s conclusion that this ratio captures the balance of cognitive
-engagement (theta) and cortical idling (alpha) more effectively than either band alone.
+These results show that EEG workload decoding depends on the representational
+geometry of the signal, not only on classifier choice. Random-window validation
+can produce optimistic accuracy because training and test folds share
+participant-specific structure. When subjects are held out, accuracy declines,
+indicating that conventional sensor-level features encode stable individual
+differences that can overwhelm the task-related workload displacement. The
+central generalization problem is therefore a form of manifold alignment:
+models must recover the direction of cognitive-effort change while ignoring
+subject-specific baseline geometry.
 
-Our exploratory analysis of theta-gamma phase-amplitude coupling found robust coupling during
-both rest and arithmetic (surrogate-normalized Z = 11.2), but no significant task-related
-modulation after proper subject-level averaging with surrogate testing (meta-analytic d=0.07,
-90\% CI $[-0.02, 0.15]$, TOST-consistent with equivalence). This differs from intracranial
-findings of task-modulated PAC \cite{lisman2013, canolty2006} and may reflect the substantial
-attenuation of phase-amplitude relationships at the scalp level due to volume conduction
-\cite{tort2010}, or a true absence of workload-specific PAC modulation in scalp EEG. The small MI
-values (0.001--0.002) and the presence of coupling in both conditions suggest that theta-gamma
-PAC is a general property of ongoing EEG activity rather than a specific marker of cognitive
-engagement. A properly powered study with dedicated PAC-optimized recordings and a causal
-manipulation (tACS, as outlined in Future Directions) is needed to resolve this question.
+The spectral findings remain neurobiologically interpretable under this
+framing. Frontal theta is commonly associated with medial frontal and
+frontoparietal control-network engagement during cognitive control
+\cite{cavanagh2014}, who reported that mid-frontal theta is modulated by both
+cognitive control demands (Cohen's d=0.71, meta-analysis across 122 studies)
+and anxiety. Concurrent alpha suppression likely reflects thalamocortical
+disinhibition and reduced idling of posterior cortical networks
+\cite{klimesch1999}. That the theta/alpha ratio emerges as the single most
+discriminative feature across datasets supports Sridhar et al.\
+\cite{sridhar2022}'s conclusion that this ratio captures the balance between
+control engagement (theta) and cortical idling (alpha) more effectively than
+either band alone. These are sensor-level signatures consistent with the
+proposed mechanisms; source localization would be required for direct
+anatomical attribution.
+
+Subject variability also has a mechanistic interpretation. Exploratory
+associations between resting Hjorth complexity, occipital theta, and
+per-subject classifiability suggest that baseline state-space entropy and
+network coupling may constrain how separable a participant's workload states
+become. A subject with a highly variable or entropic baseline may show a
+smaller task-induced displacement relative to ongoing neural fluctuations,
+whereas a subject with a more constrained baseline may move along a clearer
+workload axis. These correlations require prospective replication, but they
+shift the interpretation of poor classification away from generic noise and
+toward individual differences in baseline neural dynamics.
+
+Our theta-gamma PAC findings reinforce the same representational lesson. PAC
+was robustly present during both rest and arithmetic (surrogate-normalized
+Z = 11.2), but fixed-band group-level task modulation was not significant
+(meta-analytic d=0.07, 90\% CI $[-0.02, 0.15]$, TOST-consistent with
+equivalence). This does not prove that workload lacks cross-frequency
+coordination. It shows that a common 4--8~Hz phase and 30--45~Hz amplitude
+definition at scalp electrodes is not a reliable invariant workload marker in
+this dataset. Individualized peak-frequency alignment and source-localized
+coupling estimates are better suited to testing whether task demand modulates
+frontoparietal or medial frontal cross-frequency interactions.
 
 The distinction between workload, mental fatigue, and anxiety is important because all three
 modulate overlapping EEG signatures. Borghini et al.\ \cite{borghini2014} showed that prolonged
@@ -897,34 +970,44 @@ subject-dependent splits, underscoring the importance of strict subject-wise val
 
 \subsection{Methodological Contributions}
 
-The multi-dataset replication framework addresses a critical gap in EEG workload research.
-Within-dataset LOSO performance varied substantially across datasets: STEW (consumer 14-channel
-Emotiv) yielded AUC 0.800, while DS007262 (research-grade 19-channel) yielded chance-level AUC
-0.467 with the 8-channel intersection. This counterintuitive result suggests that dataset
-characteristics---task design, class balance, and recording consistency---affect classification
-performance more strongly than hardware quality. STEW's superior performance likely reflects its
-balanced classes (50\% workload) and within-subject trial structure, which reduces subject-identity
-leakage compared to MAT's blocked design (25\% workload class).
+The multi-dataset replication framework addresses a critical gap in EEG
+workload research by evaluating whether workload features survive changes in
+participants, tasks, and recording systems. Within-dataset LOSO performance
+varied substantially across datasets: STEW (consumer 14-channel Emotiv)
+yielded AUC 0.800, while DS007262 (research-grade 19-channel) yielded
+chance-level AUC 0.467 with the 8-channel intersection. This counterintuitive
+result suggests that task design, class balance, recording consistency, and
+baseline state structure can affect classifiability more strongly than
+hardware grade alone. STEW's superior performance likely reflects its balanced
+classes (50\% workload) and within-subject trial structure, whereas MAT's
+blocked design (25\% workload class) increases the opportunity for
+subject-identity structure to dominate.
 
-Cross-dataset near-transfer for full models was at chance levels (AUC 0.47--0.51),
-demonstrating that the 8-channel common feature set is insufficient for dataset-independent
-classification by standard classifiers. However, SNWA significantly generalized to DS007262
-(AUC 0.618, p=0.005), indicating that subject-normalized feature selection captures
-individual-level workload modulation that survives cross-dataset recording differences. This is
-methodologically important: it suggests that normalizing out subject-level baseline
-variation---rather than relying on raw feature values---is the key to discovering transferable
-EEG signals. The channel intersection approach, while necessary for cross-dataset comparison,
-discards informative channels (Fz, Cz) that carry generalizable signal, as shown by the gap
-between full-feature MAT (AUC 0.796) and intersection-reduced MAT (AUC 0.709). Multiple
-transfer confounders contribute: electrode configurations, task designs, populations, and
-instruction differences. Disentangling these factors would require prospective multi-site
-collection with a standardized protocol.
+Cross-dataset near-transfer for full models was at chance levels (AUC
+0.47--0.51), demonstrating that raw 8-channel sensor-space features are
+insufficient for dataset-independent workload classification by conventional
+models. SNWA significantly generalized to DS007262 (AUC 0.618, p=0.005),
+indicating that subject-normalized feature displacements preserve some
+workload-relevant structure across recording contexts. This is the key
+methodological contribution: the transferable signal appears more clearly
+after subject-specific baselines are removed and features are expressed as
+directions of within-subject state change. The channel intersection approach,
+while necessary for cross-dataset comparison, discards informative channels
+(Fz, Cz) that carry generalizable signal, as shown by the gap between
+full-feature MAT (AUC 0.796) and intersection-reduced MAT (AUC 0.709).
+Multiple transfer confounders remain--electrode configurations, task designs,
+populations, reference montages, and instructions--and disentangling them
+requires prospective multi-site collection with a standardized protocol.
 
-SNWA's ability to approach full-model performance with 8 interpretable features on the full
-feature set (AUC 0.761 vs 0.796) and to generalize to an unseen dataset has practical
-implications. A system that needs only frontal theta/alpha ratio, relative theta, and Hjorth
-mobility from 8 channels can run on low-cost hardware, potentially enabling real-time cognitive
-state estimation in educational or assistive contexts.
+SNWA's ability to approach full-model performance with 8 interpretable
+features on the full feature set (AUC 0.761 vs 0.796) and to generalize to an
+unseen dataset has practical and theoretical implications. Practically, a
+compact workload axis based on frontal theta/alpha ratio, relative theta, and
+Hjorth mobility could support low-channel real-time cognitive-state
+estimation after per-subject baseline calibration. Theoretically, the result
+suggests that cognitive effort is not best represented by absolute scalp
+feature values, but by a subject-normalized displacement along a partially
+shared latent axis.
 
 \subsection{Limitations}
 
@@ -991,20 +1074,28 @@ Second, domain adaptation methods remain promising for cross-dataset transfer. A
 as subspace alignment \cite{jayaram2016} and CORAL should be tested with the full channel sets
 rather than the 8-channel intersection used here.
 
-Third, the presence of theta-gamma coupling in both conditions---without task modulation---
-warrants further investigation. A preregistered tACS experiment (6~Hz frontal, F3/F4, 2~mA,
-sham-controlled crossover, N=40) could test whether induced theta oscillations causally modulate
-PAC and arithmetic performance, potentially revealing a task-specific coupling effect that our
-correlational analysis was underpowered to detect.
+Third, theta-gamma PAC should be re-tested with individualized frequency
+alignment and source-localized coupling estimates. Subject-specific theta
+peaks, broader amplitude-frequency searches, controls for nonsinusoidal
+waveform shape, and generator-level estimates would provide a stronger test
+than fixed 4--8~Hz / 30--45~Hz sensor bands. A preregistered tACS experiment
+(6~Hz frontal, F3/F4, 2~mA, sham-controlled crossover, N=40) could then test
+whether induced theta oscillations causally modulate PAC and arithmetic
+performance.
 
-Fourth, source localization using standardized low-resolution electromagnetic tomography
-(sLORETA) on the MAT 19-channel data would allow anatomical attribution of the frontal theta
-effect to specific cortical sources (e.g., anterior cingulate, prefrontal cortex).
+Fourth, source localization using standardized low-resolution electromagnetic
+tomography (sLORETA) or MNE inverse modeling on the MAT 19-channel data would
+allow stronger anatomical attribution of the frontal theta effect to candidate
+medial frontal and prefrontal generators.
 
-Fifth, closed-loop experiments where task difficulty adapts to real-time theta power could
-establish causal relationships between theta oscillations and cognitive performance. Finally,
-clinical populations with attentional deficits (ADHD, mild cognitive impairment) may show altered
-theta dynamics, providing a physiological biomarker.
+Fifth, future models should explicitly learn subject-invariant latent
+representations. Contrastive objectives, domain-adversarial training,
+source-informed features, and state-space models may better separate the
+cognitive-effort trajectory from subject-specific topological constraints.
+Finally, closed-loop experiments where task difficulty adapts to real-time
+theta power could establish causal relationships between theta oscillations
+and cognitive performance, and clinical populations with attentional deficits
+(ADHD, mild cognitive impairment) may show altered theta dynamics.
 
 \subsection{Ethics Statement}
 
