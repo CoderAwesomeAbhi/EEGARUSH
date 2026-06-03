@@ -1,0 +1,2 @@
+status,primary_statistic,primary_spearman_rho,primary_p_two_sided,primary_p_one_sided_positive,trial_level_spearman_rho,trial_level_p_two_sided,trial_level_p_one_sided_positive,available_level_count,available_levels,n_subjects,n_trials,n_subject_level_rows,per_subject_rho_mean,per_subject_rho_median,per_subject_positive_count
+failure,subject_level_spearman,-0.017674544484603535,0.8442702130345282,0.577864893482736,-0.01462731157508905,0.6226793436265199,0.6886603281867401,7,"1,2,3,4,5,6,7",18,1134,126,-0.05952380952380952,0.0,8

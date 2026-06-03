@@ -1,0 +1,104 @@
+protocol_name: DS007262 frozen external confirmatory test
+lock_date: 2026-06-03
+source_report: THEORY_VALIDATION_RESULTS.md
+
+model_selection_rule:
+  description: >
+    Select the single calibration/model pair with the best mean exploratory
+    window ROC-AUC across MAT and STEW among the tested linear models. This
+    avoids choosing one model for MAT and a different model for STEW.
+  selected_calibration: zscore
+  selected_model: logistic_l2
+  selected_model_reason: >
+    zscore + logistic_l2 had mean MAT/STEW window ROC-AUC 0.8287205
+    (MAT 0.865995; STEW 0.791446), exceeding zscore + linear_svm mean
+    ROC-AUC 0.8252035 (MAT 0.858511; STEW 0.791896).
+
+training_data:
+  datasets:
+    - name: MAT
+      path: outputs_reproduced/features/eeg_features.csv
+      calibration_split: first 60 seconds of label-0 resting windows
+      scoring_rows: workload windows plus resting windows after the first 60 seconds
+    - name: STEW
+      path: results/multi_dataset/stew_features.parquet
+      calibration_split: first 50 percent of label-0 rest rows within each subject by row order
+      scoring_rows: workload rows plus remaining rest rows
+  ds007262_training_rows: none
+  leakage_rule: DS007262 is never used for model fitting, model selection, or hyperparameter tuning.
+
+preprocessing:
+  feature_calibration: per-subject baseline z-scoring
+  missing_value_imputation: sklearn.impute.SimpleImputer(strategy="median")
+  global_scaling: sklearn.preprocessing.StandardScaler()
+  calibration_epsilon: 1.0e-12
+
+model:
+  sklearn_class: sklearn.linear_model.LogisticRegression
+  penalty: l2
+  C: 1.0
+  solver: liblinear
+  class_weight: balanced
+  max_iter: 5000
+  random_state: 20260602
+
+selected_features:
+  selected_feature_count: 200
+  channels:
+    - F3
+    - F4
+    - F7
+    - F8
+    - O1
+    - O2
+    - T3
+    - T4
+  feature_templates:
+    - stat_{ch}_mean
+    - stat_{ch}_std
+    - stat_{ch}_var
+    - stat_{ch}_rms
+    - stat_{ch}_ptp
+    - stat_{ch}_skew
+    - stat_{ch}_kurtosis
+    - stat_{ch}_shannon_entropy
+    - hjorth_{ch}_activity
+    - hjorth_{ch}_mobility
+    - hjorth_{ch}_complexity
+    - spectral_{ch}_entropy
+    - band_abs_{ch}_delta
+    - band_rel_{ch}_delta
+    - band_abs_{ch}_theta
+    - band_rel_{ch}_theta
+    - band_abs_{ch}_alpha
+    - band_rel_{ch}_alpha
+    - band_abs_{ch}_beta
+    - band_rel_{ch}_beta
+    - band_abs_{ch}_gamma
+    - band_rel_{ch}_gamma
+    - ratio_{ch}_theta_alpha
+    - ratio_{ch}_beta_alpha
+    - ratio_{ch}_theta_beta
+
+ds007262_scoring:
+  source_root: external_data/ds007262_git
+  runtime_raw_cache: results/ds007262_confirmatory/raw_cache
+  openneuro_s3_prefix: https://s3.amazonaws.com/openneuro.org/ds007262
+  task: arithmetic
+  eeg_format: BrainVision
+  sampling_rate_hz: 250
+  baseline_epoch_rule: >
+    For each subject, use the 60 seconds immediately after the
+    started_tutorial_artihmetic marker and before the first difficulty trial.
+    Split this interval into non-overlapping 6-second windows for z-score
+    calibration.
+  task_epoch_rule: >
+    Score all non-tutorial arithmetic trials with numeric difficulty_range,
+    duration > 0, and no dropped_samples event row. Use the full trial duration
+    as one scored epoch.
+  difficulty_level_mapping: >
+    Sort unique numeric difficulty ranges by lower endpoint and map them to
+    ordinal workload levels. The local DS007262 checkout exposes seven
+    non-tutorial ranges: 0.6-1.5 through 6.0-6.9.
+  primary_score: logistic regression decision_function
+  primary_statistic: Spearman correlation between subject-level mean score and ordinal workload level
