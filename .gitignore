@@ -10,4 +10,6 @@ data/raw/
 *.synctex.gz
 outputs/synthetic_smoke_test/
 results/theory_validation/mplconfig/
+results/ds007262_confirmatory/raw_cache/
+results/ds007262_confirmatory/mplconfig/
 .ipynb_checkpoints/
