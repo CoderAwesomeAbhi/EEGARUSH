@@ -26,9 +26,9 @@
 
 \title{\textbf{Subject-Normalized EEG Workload Decoding Reveals an Invariant Cognitive-Effort Axis Constrained by Individual Sensor-Space Geometry}}
 
-\author[1]{Abhijay Gangarapu}
+\author[1]{Abhijay Gangarapu\thanks{$^{\ast}$These authors contributed equally to this work.}}
+\author[1]{Arush Ravipati\footnotemark[1]}
 \affil[1]{Independent Researcher}
-\author{ORCID: 0009-0008-4800-3865}
 
 \date{June 2026}
 
@@ -134,7 +134,11 @@ signed workload displacement across training subjects. Operationally, SNWA is
 a robust within-subject normalization and weighting procedure; conceptually,
 it tests whether workload can be represented as a shared low-dimensional
 direction after subject-specific baseline offsets and scales have been
-partially removed.
+partially removed. In biological terms, SNWA is intended to isolate the
+task-induced fronto-hippocampal theta component from concurrent
+thalamocortical alpha disinhibition, so that the model receives a
+subject-aligned representation of cognitive effort rather than absolute scalp
+power alone.
 
 We test four questions. First, do frontal theta enhancement and posterior
 alpha suppression replicate across datasets under subject-wise validation?
@@ -267,8 +271,11 @@ Each window was represented by 805 interpretable features per channel:
 SNWA operationalizes a subject-aligned workload coordinate. The procedure
 first expresses each task window relative to that subject's own resting
 feature distribution, reducing subject-specific offsets and scale differences
-before cross-subject feature selection. For each subject $s$, window $w$, and
-feature $f$:
+before cross-subject feature selection. In mechanistic terms, the projection
+is designed to amplify the coordinated increase in fronto-hippocampal theta
+relative to the concurrent release of posterior alpha inhibition, rather than
+to treat all baseline power differences as equally informative. For each
+subject $s$, window $w$, and feature $f$:
 
 \[
 z_{s,w,f} = \frac{x_{s,w,f} - \text{median}_{\text{rest},s}(f)}
@@ -748,7 +755,7 @@ Per-subject LOSO AUC on the MAT dataset (805 features, logistic regression)
 ranged from 0.34 to 1.00 (median 0.86, IQR 0.76--0.94, mean $\pm$ SD:
 0.83 $\pm$ 0.16). Two subjects (5.6\%) were strictly at or below chance
 (AUC $\leq$ 0.5), and three subjects (8.3\%) had AUC below 0.60
-(Figure~\ref{fig:variability}A). The three resistant subjects---Subject08
+(Figure~\ref{fig:variability}A). The three least classifiable subjects---Subject08
 (AUC 0.34), Subject31 (AUC 0.39), and Subject35 (AUC 0.55)---were
 consistently at chance across all five classifier families (SVM, logistic
 regression, gradient boosting, random forest, XGBoost), indicating that
@@ -779,7 +786,7 @@ on subjects predicted as classifiable---was evaluated via leave-one-subject-out
 cross-validation. LOOCV prediction achieved Spearman $\rho = 0.323$
 ($p = 0.054$, not significant). The screening accuracy of 86.1\% is below
 the 91.7\% baseline achieved by predicting all subjects as classifiable
-(3/36 resistant), confirming that the two-stage approach does not improve
+(3/36 least classifiable subjects), confirming that the two-stage approach does not improve
 performance (0.810 vs 0.828 without screening). These results are presented
 as exploratory and require prospective replication with N$\ge$200.
 
@@ -819,17 +826,25 @@ prospective replication (N$\ge$200).}
 
 \subsubsection{Biological Interpretation of Subject Variability}
 
-Resistant subjects showed measurably different resting EEG profiles.
-Mann--Whitney U tests identified four features with significant group
-differences (all $p < 0.05$): lower T5--O1 correlation (resistant mean
+The least classifiable subjects showed measurably different resting EEG
+profiles. Mann--Whitney U tests identified four features with significant
+group differences (all $p < 0.05$): lower T5--O1 correlation (least
+classifiable mean
 0.41 vs classifiable 0.62, $p = 0.004$), lower T5--P3 correlation (0.54
 vs 0.74, $p = 0.009$), lower T6--O1 correlation (0.25 vs 0.47,
 $p = 0.041$), and lower T5--O2 correlation (0.27 vs 0.43, $p = 0.041$).
 These features all reflect reduced temporal--occipital connectivity at
-rest, suggesting that subjects with less coordinated resting posterior
-EEG activity produce less reliable workload-related features. This is
-consistent with the Hjorth complexity findings: lower resting complexity
-(more regular, less noisy signals) correlates with better classifiability.
+rest, suggesting a baseline cognitive-phenotyping account rather than simple
+signal unreliability. One plausible interpretation is that subjects with high
+resting Hjorth complexity and weakened posterior coupling begin the
+experiment in a state of elevated cognitive load or hyperarousal, potentially
+reflecting persistent default-mode interference with frontoparietal task-set
+formation. Under that condition, the frontoparietal network may already be
+partially saturated at rest, so the additional task-induced displacement
+becomes mathematically small relative to the baseline state. In this framing,
+poor classifiability does not imply that these participants have bad EEG; it
+implies that the workload contrast is compressed because the resting state is
+already shifted toward the same control regime the task is meant to evoke.
 
 To assess potential confounds, we tested whether demographic or
 performance factors predicted per-subject AUC in the MAT dataset.
@@ -843,13 +858,15 @@ performance-related confounds.
 
 These results identify a concrete screening target: subjects with high
 resting Hjorth complexity, low temporal--occipital connectivity, or
-elevated parietal gamma may require personalized calibration---longer
-baseline recording, subject-specific feature selection, or adaptive
-classifier retraining---before SNWA can achieve reliable classification.
-The finding that resting EEG profiles may predict classifiability has
-potential implications for EEG workload system deployment: a 2-minute
-resting recording could determine whether a subject is likely to benefit
-from standard SNWA calibration or requires personalized adaptation.
+elevated parietal gamma may represent a distinct baseline cognitive
+phenotype that requires personalized calibration---longer baseline
+recording, subject-specific feature selection, or adaptive classifier
+retraining---before SNWA can achieve reliable classification. The finding
+that resting EEG profiles may predict classifiability has potential
+implications for workload system deployment: a 2-minute resting recording
+could determine whether a subject is likely to benefit from standard SNWA
+calibration or requires personalized adaptation because the frontoparietal
+workload delta is already compressed at baseline.
 Prospective validation with N$\ge$200 is needed before clinical
 implementation.
 
@@ -920,12 +937,17 @@ Subject variability also has a mechanistic interpretation. Exploratory
 associations between resting Hjorth complexity, occipital theta, and
 per-subject classifiability suggest that baseline state-space entropy and
 network coupling may constrain how separable a participant's workload states
-become. A subject with a highly variable or entropic baseline may show a
-smaller task-induced displacement relative to ongoing neural fluctuations,
-whereas a subject with a more constrained baseline may move along a clearer
-workload axis. These correlations require prospective replication, but they
-shift the interpretation of poor classification away from generic noise and
-toward individual differences in baseline neural dynamics.
+become. One biologically plausible hypothesis is that high resting Hjorth
+complexity together with weakened temporal--occipital coupling indexes a
+baseline hyperarousal or default-mode interference state in which the
+frontoparietal control system is already engaged before task onset. In that
+case, the arithmetic challenge produces only a small additional shift, making
+the workload delta mathematically difficult to resolve. A subject with a more
+constrained baseline, by contrast, may show a clearer transition onto the
+task-evoked control trajectory. These correlations require prospective
+replication, but they shift the interpretation of poor classification away
+from generic noise and toward individual differences in baseline neural
+dynamics.
 
 Our theta-gamma PAC findings reinforce the same representational lesson. PAC
 was robustly present during both rest and arithmetic (surrogate-normalized
@@ -1007,7 +1029,8 @@ Hjorth mobility could support low-channel real-time cognitive-state
 estimation after per-subject baseline calibration. Theoretically, the result
 suggests that cognitive effort is not best represented by absolute scalp
 feature values, but by a subject-normalized displacement along a partially
-shared latent axis.
+shared latent axis that captures fronto-hippocampal theta recruitment against
+thalamocortical alpha disinhibition.
 
 \subsection{Limitations}
 
@@ -1127,18 +1150,18 @@ also includes SHA-256 checksums for all output files (SHA256SUMS.txt).
 
 \subsection{Acknowledgments}
 
-The author thanks the creators of the PhysioNet EEGMAT, STEW, and OpenNeuro DS007262 datasets
-for making their data publicly available. Computational resources were provided by the author's
+The authors thank the creators of the PhysioNet EEGMAT, STEW, and OpenNeuro DS007262 datasets
+for making their data publicly available. Computational resources were provided by the authors'
 personal computing infrastructure. No external funding was received for this work.
 
 \subsection{Author Contributions}
 
-Abhijay Gangarapu designed the analysis, implemented the code, ran all analyses, interpreted
-results, and prepared the manuscript.
+Abhijay Gangarapu and Arush Ravipati contributed equally to the conception,
+analysis, interpretation, and manuscript preparation for this study.
 
 \subsection{Competing Interests}
 
-The author declares no competing interests. The author has no financial relationship with any
+The authors declare no competing interests. The authors have no financial relationship with any
 EEG hardware company (Emotiv, g.tec, BrainProducts, etc.), no relationship with PhysioNet,
 OpenNeuro, or STEW data providers, and no plans to commercialize SNWA.
 
