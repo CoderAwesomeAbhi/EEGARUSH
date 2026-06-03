@@ -1,0 +1,20 @@
+# Claim-to-Result Audit
+
+| Manuscript claim | Executed result source |
+| --- | --- |
+| Subject-specific z-scoring improved exploratory MAT workload decoding. | `THEORY_VALIDATION_RESULTS.md`, Baseline-Calibration Comparison: MAT zscore + logistic_l2 window ROC-AUC = 0.865995; MAT absolute + logistic_l2 window ROC-AUC = 0.736025; MAT mean_subtraction + logistic_l2 window ROC-AUC = 0.826001. |
+| Subject-specific z-scoring improved exploratory STEW workload decoding. | `THEORY_VALIDATION_RESULTS.md`, Baseline-Calibration Comparison: STEW zscore + linear_svm window ROC-AUC = 0.791896; STEW zscore + logistic_l2 window ROC-AUC = 0.791446; STEW absolute + logistic_l2 window ROC-AUC = 0.723308; STEW mean_subtraction + logistic_l2 window ROC-AUC = 0.694381. |
+| The frozen feature space contained 200 features from the 8-channel intersection F3, F4, F7, F8, O1, O2, T3, T4. | `THEORY_VALIDATION_RESULTS.md`, Execution Contract; `FROZEN_CONFIG.yaml`, selected_features. |
+| MAT calibration used the first 60 seconds of resting windows, excluded from scoring. | `THEORY_VALIDATION_RESULTS.md`, Execution Contract; `FROZEN_CONFIG.yaml`, training_data. |
+| STEW calibration used the first 50 percent of cached rest rows because timing metadata were unavailable. | `THEORY_VALIDATION_RESULTS.md`, Execution Contract and Non-Hallucination Notes; `FROZEN_CONFIG.yaml`, training_data. |
+| Negative controls were significant for the best exploratory MAT and STEW configurations. | `THEORY_VALIDATION_RESULTS.md`, Negative Controls: MAT observed AUC = 0.865995, permutation p = 0.000999; STEW observed AUC = 0.791896, permutation p = 0.000999. |
+| The MAT calibration-duration plateau occurred at 51 seconds with ROC-AUC = 0.876133. | `THEORY_VALIDATION_RESULTS.md`, Calibration-Duration Curve; `results/theory_validation/calibration_duration_plateaus.csv`. |
+| STEW calibration-duration analysis was not run. | `THEORY_VALIDATION_RESULTS.md`, Non-Hallucination Notes: cached STEW parquet contains no timing columns. |
+| Feature-direction stability between MAT and STEW was not demonstrated. | `THEORY_VALIDATION_RESULTS.md`, Effect-Direction Analysis: zscore + logistic_l2 Pearson r = 0.0136403, p = 0.847975; all tested correlations non-significant. |
+| The manuscript does not claim an invariant or universal workload axis. | Supported by the null effect-direction analysis in `THEORY_VALIDATION_RESULTS.md` and the failed DS007262 confirmatory result in `results/ds007262_confirmatory/DS007262_CONFIRMATORY_RESULTS.md`. |
+| The DS007262 model was frozen from exploratory MAT/STEW results and was not retrained on DS007262. | `FROZEN_CONFIG.yaml`, model and ds007262_scoring; `CONFIRMATORY_ANALYSIS_PLAN.md`; `results/ds007262_confirmatory/DS007262_CONFIRMATORY_RESULTS.md`. |
+| The DS007262 event files exposed seven available non-tutorial difficulty levels, not eight. | `results/ds007262_confirmatory/difficulty_level_mapping.csv`; `results/ds007262_confirmatory/DS007262_CONFIRMATORY_RESULTS.md`. |
+| The DS007262 graded workload confirmatory test failed. | `results/ds007262_confirmatory/ds007262_confirmatory_metrics.csv`: status = failure, subject-level Spearman rho = -0.0176745, one-sided p = 0.577865, 18 subjects, 1,134 trials. |
+| DS007262 trial-level monotonicity was also not supported. | `results/ds007262_confirmatory/ds007262_confirmatory_metrics.csv`: trial-level Spearman rho = -0.0146273, one-sided p = 0.688660. |
+| Resting EEG phenotyping was downgraded to a limitation and no validated screening rule was claimed. | `REGRESSION_CHECK_REPORT.md` and `THEORY_CLAIM_LEDGER.md` note the prior resting-predictor weakness; manuscript states no MAT resting feature survived FDR correction and no subject-level rule was established. |
+| No coupling-analysis, source-reconstruction, or anatomical-generator result is reported. | Absence of executed support in `THEORY_VALIDATION_RESULTS.md`, `MISSING_ANALYSES.md`, and `results/ds007262_confirmatory/`; unsupported methods/results were removed from `paper/tex/main.tex`. |
