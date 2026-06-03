@@ -1,0 +1,11 @@
+source_dataset,target_dataset,model,calibration,target_mode,window_auc,subject_auc_mean,subject_auc_sd,n_subjects,n_predictions
+MAT,STEW,logistic_l2,absolute,zero_shot_absolute,0.5221114259325934,0.5172801805561372,0.23919859866807153,48,1519
+MAT,STEW,logistic_l2,mean_subtraction,zero_shot_absolute,0.4986420062303345,0.470954360198982,0.27870857838341867,48,1519
+MAT,STEW,logistic_l2,mean_subtraction,unlabeled_baseline_calibrated,0.5141473990701461,0.470954360198982,0.27870857838341867,48,1519
+MAT,STEW,logistic_l2,zscore,zero_shot_absolute,0.5322376763043785,0.5550459295874519,0.2775115456177112,48,1519
+MAT,STEW,logistic_l2,zscore,unlabeled_baseline_calibrated,0.6014797044504626,0.6085492536311298,0.23603268132711291,48,1519
+STEW,MAT,logistic_l2,absolute,zero_shot_absolute,0.6188851957370476,0.6395595728003136,0.24377536420084192,36,3186
+STEW,MAT,logistic_l2,mean_subtraction,zero_shot_absolute,0.6181909711230699,0.6407088967274153,0.22043797079300975,36,3186
+STEW,MAT,logistic_l2,mean_subtraction,unlabeled_baseline_calibrated,0.6322148359185396,0.6407088967274153,0.22043797079300975,36,3186
+STEW,MAT,logistic_l2,zscore,zero_shot_absolute,0.5164090253596427,0.5201437879678621,0.24520578242480218,36,3186
+STEW,MAT,logistic_l2,zscore,unlabeled_baseline_calibrated,0.6499155851007703,0.6506572114442486,0.21878738187803215,36,3186
