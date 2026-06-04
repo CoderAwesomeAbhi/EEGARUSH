@@ -19,3 +19,5 @@ results/raw_provenance/mplconfig/
 results/stew_sensitivity/mplconfig/
 results/stew_sensitivity/*.parquet
 *.parquet
+*.set
+*.fdt
