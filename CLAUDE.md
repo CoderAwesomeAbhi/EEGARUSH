@@ -121,6 +121,25 @@ detail. Summary:
   subtraction (paired subject-bootstrap CI). Locked features = the frozen 96;
   locked channels = the 8 harmonized (all documented in COG-BCI). One-shot only:
   no retuning/task-switching/channel-expansion/feature-reselection/endpoint change.
+- **Sampling representation (locked, corrected):** both source MAT **and** target
+  COG-BCI are resampled 500 → 128 Hz via `scipy.signal.resample_poly` (`up=32`,
+  `down=125`) before extracting the frozen 96 features — matching the
+  hypothesis-generating MAT→STEW transport pipeline. The frozen 96 features are
+  scale/offset-invariant but **not** sampling-rate-invariant.
+  **Native-500-Hz COG-BCI analysis is forbidden** from the primary verdict. See
+  `COG_BCI_PROTOCOL_AMENDMENT_SAMPLING_REPRESENTATION.md`.
+
+## COG-BCI Executable Freeze (ready; not yet run)
+
+- Source verified (29/29), sampling ambiguity resolved by the amendment above, and
+  all 29 subjects' exact locked `ses-S1` inputs materialized locally + SHA-256
+  recorded. The executable config is **frozen ready for a single prospective run**
+  (`COG_BCI_EXECUTABLE_CONFIG.yaml`, `COG_BCI_RUN_ONCE_CHECKLIST.md`,
+  `COG_BCI_EXECUTABLE_FREEZE_DECISION.md`,
+  `scripts/run_cog_bci_one_shot_prospective.py`).
+- **No COG-BCI predictive metric has been computed.** The one-shot script requires
+  `--execute-locked-one-shot`, refuses if results exist, and verifies input/config/
+  script checksums. Run it **exactly once**, then report honestly.
 
 ## Automatic GitHub Sync Policy
 

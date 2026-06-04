@@ -10,13 +10,21 @@ mirroring the frozen MAT->STEW transport pipeline
 SAFETY / DISCIPLINE (enforced in code):
   * Refuses to run the predictive analysis unless `--execute-locked-one-shot`
     is passed.
-  * Refuses to run while `COG_BCI_EXECUTABLE_CONFIG.yaml` has a `BLOCKED_*`
-    status (current state: BLOCKED_PROTOCOL_AMBIGUITY_DO_NOT_RUN).
+  * Refuses to run unless `COG_BCI_EXECUTABLE_CONFIG.yaml` status is
+    `FROZEN_READY_*` and the sampling rule is the resolved 128 Hz
+    `resample_poly(up=32, down=125)` representation for BOTH MAT and COG-BCI.
+  * Refuses to run unless the config & this script match the recorded frozen
+    run-materials SHA-256 checksums.
   * Aborts if any result output already exists (prevents a second
     result-producing execution).
   * Verifies every locked source input against its recorded SHA-256 before use;
     the run must not depend on live remote range reads.
   * On execution, writes a run marker plus config & script SHA-256 checksums.
+
+Sampling representation (frozen): both source MAT and target COG-BCI are resampled
+500 -> 128 Hz via scipy.signal.resample_poly(up=32, down=125) before extracting the
+frozen 96 transport features. Native-500-Hz COG-BCI analysis is forbidden from the
+primary verdict. See COG_BCI_PROTOCOL_AMENDMENT_SAMPLING_REPRESENTATION.md.
 
 Default mode (no flag) performs DRY VALIDATION only: file existence, input-hash
 verification, locked-channel presence, locked-condition availability, and window
@@ -46,6 +54,7 @@ SCRIPT_PATH = Path(__file__).resolve()
 COG_SRC = ROOT / "data" / "raw" / "cog_bci" / "zenodo_6874128"
 MAT_DIR = ROOT / "data" / "raw" / "eegmat"
 HASH_MANIFEST = ROOT / "results" / "cog_bci_provenance" / "cog_bci_execution_input_hash_manifest.csv"
+FROZEN_CHECKSUMS = ROOT / "results" / "cog_bci_provenance" / "cog_bci_frozen_run_materials_checksums.json"
 
 # Locked pipeline constants (must match the frozen transport pipeline).
 WINDOW_SECONDS = 4.0
@@ -113,8 +122,18 @@ def dry_validate(cfg: dict) -> dict:
 
     # 1. config status
     status = cfg.get("status", "")
-    add("config_status_not_blocked", not status.startswith("BLOCKED"),
+    add("config_status_frozen_ready", status.startswith("FROZEN_READY"),
         f"status={status}")
+
+    # 1b. sampling representation resolved to 128 Hz for both datasets
+    rule = cfg.get("sampling_pipeline", {}).get("locked_rule", {})
+    add("sampling_rule_128hz_both", (
+        cfg.get("sampling_pipeline", {}).get("resolved") is True
+        and rule.get("target_hz") == TARGET_SFREQ
+        and rule.get("up") == RESAMPLE_UP and rule.get("down") == RESAMPLE_DOWN
+        and rule.get("applies_to_source_mat") and rule.get("applies_to_target_cog_bci")
+        and rule.get("native_500hz_cog_analysis_allowed") is False),
+        f"rule={rule}")
 
     # 2. hash manifest exists
     add("hash_manifest_exists", HASH_MANIFEST.exists(), str(HASH_MANIFEST))
@@ -257,7 +276,6 @@ def _build_feature_frames(cfg):
     if not samp.get("resolved", False):
         raise RuntimeError("sampling_pipeline.resolved is false -- protocol ambiguity unresolved")
     cog_rows = []
-    common_index = [COG_LOCKED_CHANNELS.index(cog) for cog in COG_LOCKED_CHANNELS]  # identity, kept explicit
     for sub in cfg["subjects"]["included"]:
         eeg = cog_eeg_dir(sub)
         for seg_type, (base, label) in COG_CONDITIONS.items():
@@ -266,6 +284,8 @@ def _build_feature_frames(cfg):
             # reorder to COMMON_8 (MAT naming) via the locked mapping
             data = raw.get_data(picks=[raw.ch_names.index(c) for c in COG_LOCKED_CHANNELS]) * 1e6
             raw.close()
+            # CORRECTED representation: COG-BCI native 500 Hz -> 128 Hz with the
+            # identical anti-aliased resample of the frozen MAT transport pipeline.
             if sfreq != TARGET_SFREQ:
                 data = resample_poly(data, up=RESAMPLE_UP, down=RESAMPLE_DOWN, axis=1)
             cog_rows += feats(data, TARGET_SFREQ, sub, "COGBCI", seg_type, label, 0.0, SEG_SECONDS, base)
@@ -372,9 +392,30 @@ def run_locked_one_shot(cfg) -> dict:
 # --------------------------------------------------------------------------- #
 def execute(cfg):
     status = cfg.get("status", "")
-    if status.startswith("BLOCKED"):
-        sys.exit(f"REFUSING TO RUN: config status is {status}. Resolve the protocol "
-                 f"ambiguity and clear the status before execution.")
+    if not status.startswith("FROZEN_READY"):
+        sys.exit(f"REFUSING TO RUN: config status is {status}, not FROZEN_READY_*. "
+                 f"Resolve and freeze the config before execution.")
+
+    # sampling representation must be the resolved 128 Hz rule for BOTH MAT and COG-BCI
+    samp = cfg.get("sampling_pipeline", {})
+    rule = samp.get("locked_rule", {})
+    if not samp.get("resolved", False) or samp.get("blocking", True):
+        sys.exit("REFUSING TO RUN: sampling_pipeline not resolved.")
+    if not (rule.get("target_hz") == TARGET_SFREQ and rule.get("up") == RESAMPLE_UP
+            and rule.get("down") == RESAMPLE_DOWN
+            and rule.get("applies_to_source_mat") and rule.get("applies_to_target_cog_bci")
+            and rule.get("native_500hz_cog_analysis_allowed") is False):
+        sys.exit("REFUSING TO RUN: config sampling rule does not match the frozen "
+                 "128 Hz resample_poly(up=32,down=125) representation for both datasets.")
+
+    # config & script checksums must match the frozen run materials
+    if not FROZEN_CHECKSUMS.exists():
+        sys.exit("REFUSING TO RUN: frozen run-materials checksum file missing.")
+    frozen = json.loads(FROZEN_CHECKSUMS.read_text())
+    if sha256_file(CONFIG_PATH) != frozen.get("config_sha256"):
+        sys.exit("REFUSING TO RUN: config SHA-256 does not match frozen run materials.")
+    if sha256_file(SCRIPT_PATH) != frozen.get("script_sha256"):
+        sys.exit("REFUSING TO RUN: script SHA-256 does not match frozen run materials.")
 
     out = ROOT / cfg["run_once_outputs"]["results_dir"]
     existing = [p for p in [
