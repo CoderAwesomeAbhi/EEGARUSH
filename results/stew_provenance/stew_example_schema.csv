@@ -1,0 +1,5 @@
+object,field,format,shape,dtype,meaning,notes
+STEW_X.npy,X,NumPy .npy,"(28512, 14, 256)",float32,processed time-resolved EEG windows,Array shape is examples x channels x samples; not engineered features.
+STEW_y.npy,y,NumPy .npy,"(28512,)",int64,binary low/high workload class labels per README,README defines labels as workload ratings >4 high and <=4 low; not a verified rest/workload flag.
+STEW_subject_id.csv,column_0,CSV,"(28512, 1)",int64,subject identifier per example,One subject ID per example; no header.
+STEW_metadata.npy,subject_id,NumPy object dict,"(28512,)",int64,subject identifier per example,"Only metadata key found; no timing, source file, condition, or channel labels."

@@ -1,0 +1,43 @@
+dataset: PhysioNet EEGMAT 1.0.0
+raw_dir: data/raw/eegmat
+sampling_frequency_hz: 500
+channels:
+  source_to_canonical:
+    EEG F3: F3
+    EEG F4: F4
+    EEG F7: F7
+    EEG F8: F8
+    EEG O1: O1
+    EEG O2: O2
+    EEG T3: T3
+    EEG T4: T4
+preprocessing:
+  raw_reader: mne.io.read_raw_edf
+  additional_filtering: none
+  rationale: raw EDF header filter metadata are heterogeneous; primary features exclude gamma and use verified raw headers for provenance
+windowing:
+  window_seconds: 4.0
+  overlap_fraction: 0.5
+  step_seconds: 2.0
+feature_set:
+  name: no_gamma_184
+  n_features: 184
+  gamma_features_excluded: true
+protocols:
+  reproduction:
+    calibration: rest windows with start_sec < 60
+    scored_rest: rest windows with start_sec >= 60
+    scored_task: all arithmetic windows
+  balanced_primary:
+    calibration: rest windows ending within 0-30 seconds
+    scored_rest: rest windows starting at >=30 and ending <=60 seconds
+    scored_task: arithmetic windows ending within 0-30 seconds
+models:
+  logistic_l2:
+    C: 1.0
+    solver: liblinear
+    class_weight: balanced
+  linear_svm:
+    C: 1.0
+    class_weight: balanced
+validation: strict leave-one-subject-out
