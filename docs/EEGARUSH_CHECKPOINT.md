@@ -151,3 +151,25 @@ Result of the exploratory within-STEW sensitivity + MAT→STEW transport stage
   rest vs MATB-difficult**; primary comparison z-scoring − mean subtraction (paired
   subject-bootstrap CI). Eyes-closed rest is excluded from the primary model.
 - Pre-download decision: `COG_BCI_PRE_DOWNLOAD_DECISION.md`.
+
+### COG-BCI status update — source verified, sampling corrected, executable freeze ready
+
+- Source provenance audit **passed** (29/29 subjects readable, 8 locked channels,
+  500 Hz, eyes-open rest + MATB-difficult present; `COG_BCI_SOURCE_PROVENANCE_*`).
+- Executable freeze first returned `BLOCKED_PROTOCOL_AMBIGUITY` because the
+  protocol's "500 Hz native — no resample" statement conflicted with the frozen
+  MAT→STEW transport pipeline, which trained the source model at **128 Hz**.
+- **Sampling representation corrected** (pre-outcome, consistency-only):
+  `COG_BCI_PROTOCOL_AMENDMENT_SAMPLING_REPRESENTATION.md`. Both source MAT **and**
+  target COG-BCI are resampled 500 → 128 Hz via `scipy.signal.resample_poly`,
+  `up=32`, `down=125`, before extracting the frozen **96** transport features. The
+  96 features are scale/offset-invariant but **not** sampling-rate-invariant.
+  Native-500-Hz COG-BCI analysis is forbidden from the primary verdict.
+- All 29 subjects' exact locked `ses-S1` inputs (`RS_Beg_EO`, `RS_End_EO`,
+  `MATBdiff` × `.set`/`.fdt`) are materialized locally and SHA-256-recorded
+  (`results/cog_bci_provenance/cog_bci_execution_input_hash_manifest.csv`).
+- Executable config is **frozen ready for a single prospective run**
+  (`COG_BCI_EXECUTABLE_CONFIG.yaml`, `COG_BCI_RUN_ONCE_CHECKLIST.md`,
+  `COG_BCI_EXECUTABLE_FREEZE_DECISION.md`,
+  `scripts/run_cog_bci_one_shot_prospective.py`). **No COG-BCI predictive metric has
+  been computed.** The one-shot test has **not** been run.

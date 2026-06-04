@@ -1,0 +1,8 @@
+{
+  "description": "Frozen run-materials SHA-256 checksums. The one-shot script aborts unless the live config and script match these exactly.",
+  "config_path": "COG_BCI_EXECUTABLE_CONFIG.yaml",
+  "config_sha256": "0273e3084650ff267d6ea846db96dfe8f2d230fe0491f769a27fe924c5c263c0",
+  "script_path": "scripts/run_cog_bci_one_shot_prospective.py",
+  "script_sha256": "679d183f54643ea765c0f8e3f4876133cf48ff6796c7b1d002a23c78f2ea3ca2",
+  "frozen_before_any_cog_bci_predictive_metric": true
+}

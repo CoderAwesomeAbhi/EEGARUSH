@@ -49,8 +49,19 @@ prospective test. Builds on `REVISED_ZSCORE_PROSPECTIVE_EVALUATION_PROTOCOL.md`.
 ## Primary outcome (matches the trained transport problem)
 
 - **Train:** the already-frozen **MAT transport-compatible source pipeline** (MAT
-  rest-vs-arithmetic eval rows; imputer + scaler + L2 logistic fit on **MAT only**;
-  500 Hz native — no resample needed since COG-BCI is also 500 Hz).
+  rest-vs-arithmetic eval rows; imputer + scaler + L2 logistic fit on **MAT only**).
+- **Sampling representation (CORRECTED — see
+  `COG_BCI_PROTOCOL_AMENDMENT_SAMPLING_REPRESENTATION.md`):** both source MAT **and**
+  target COG-BCI are represented at **128 Hz** before feature extraction, using the
+  **identical** deterministic anti-aliased resampling of the frozen transport
+  pipeline (`scipy.signal.resample_poly`, `up=32`, `down=125`). The earlier
+  "500 Hz native — no resample needed" statement was incorrect (it conflated MAT's
+  native 500 Hz acquisition with the transport pipeline's frozen 128 Hz feature
+  representation) and is **superseded**. The 96 features are scale/offset-invariant
+  but **not** sampling-rate-invariant, so the 128-Hz-trained model requires 128-Hz
+  target features. **Native-500-Hz COG-BCI analysis is forbidden** from influencing
+  the primary verdict. This correction was made **before** any COG-BCI predictive
+  metric was computed and reopens no other degree of freedom.
 - **Test:** COG-BCI **eyes-open rest vs the single predeclared MATB workload
   condition = MATB "difficult"** (the **highest documented** workload level, fixed
   before download).
