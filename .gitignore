@@ -14,3 +14,5 @@ results/ds007262_confirmatory/raw_cache/
 results/ds007262_confirmatory/mplconfig/
 results/raw_provenance/mplconfig/
 .ipynb_checkpoints/
+.claude/settings.local.json
+.venv_test/
