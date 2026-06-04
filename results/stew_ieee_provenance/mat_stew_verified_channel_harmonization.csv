@@ -1,0 +1,15 @@
+stew_channel_documented,mapped_mat_channel,mapping_basis,present_in_mat,harmonizable,stew_label_embedded_in_source
+AF3,,no_mat_counterpart,False,False,False
+F7,F7,direct_name_match,True,True,False
+F3,F3,direct_name_match,True,True,False
+FC5,,no_mat_counterpart,False,False,False
+T7,T3,documented_10-20_equivalence,True,True,False
+P7,T5,documented_10-20_equivalence,True,True,False
+O1,O1,direct_name_match,True,True,False
+O2,O2,direct_name_match,True,True,False
+P8,T6,documented_10-20_equivalence,True,True,False
+T8,T4,documented_10-20_equivalence,True,True,False
+FC6,,no_mat_counterpart,False,False,False
+F4,F4,direct_name_match,True,True,False
+F8,F8,direct_name_match,True,True,False
+AF4,,no_mat_counterpart,False,False,False
