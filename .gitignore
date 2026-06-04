@@ -16,3 +16,6 @@ results/raw_provenance/mplconfig/
 .ipynb_checkpoints/
 .claude/settings.local.json
 .venv_test/
+results/stew_sensitivity/mplconfig/
+results/stew_sensitivity/*.parquet
+*.parquet

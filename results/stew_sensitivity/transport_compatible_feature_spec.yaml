@@ -1,0 +1,63 @@
+# Transport-compatible feature specification
+# FROZEN BEFORE any transfer/AUC/permutation result was computed.
+measurement_unit_problem:
+  mat_units: microvolts_from_EDF
+  stew_units: raw_16bit_emotiv_epoc_adc_counts_with_dc_offset_~4200
+  official_unit_conversion_found: false
+  searched: [official_zip_archive_no_readme, ieee_dataport_page, stew_publication_metadata]
+  conclusion: no_verified_microvolt_conversion_exists_for_STEW
+  resampling_note: MAT_500_to_128_resolves_sampling_rate_only_NOT_amplitude_units
+
+two_separate_pipelines:
+  within_stew:
+    rationale: train_and_test_within_same_device_unit_system
+    feature_set: no_gamma_184
+    n_features: 184
+    candidate_method: mean_subtraction
+    comparator: absolute
+    secondary_diagnostic: zscore
+    labeling: cross_task_device_sensitivity_only_not_replication_or_confirmation
+  mat_to_stew_transport:
+    rationale: amplitude_units_not_comparable_so_use_only_scale_offset_invariant_features
+    invariance_property: invariant_under_x_to_a_x_plus_b_with_a_gt_0
+    empirical_verification: max_relative_change_lt_1e-6_over_42_random_(a,b)_draws
+    feature_set: transport_invariant_96
+    n_features: 96
+    mat_resample: {method: scipy.signal.resample_poly, up: 32, down: 125, native_hz: 500, target_hz: 128.0}
+    candidate_method: mean_subtraction
+    comparator: absolute
+    secondary_diagnostic: zscore
+    imputation_scaling_fit_on: MAT_training_only
+    target_calibration_source: STEW_unlabeled_baseline_first_30s_lo
+    target_labels_used_for_training_or_tuning: false
+
+transport_invariant_templates_per_channel:
+  - stat_skew
+  - stat_kurtosis
+  - hjorth_mobility
+  - hjorth_complexity
+  - spectral_entropy
+  - band_rel_delta
+  - band_rel_theta
+  - band_rel_alpha
+  - band_rel_beta
+  - ratio_theta_alpha
+  - ratio_beta_alpha
+  - ratio_theta_beta
+transport_excluded_templates_reason:
+  amplitude_or_variance_in_device_units: [stat_mean, stat_std, stat_var, stat_rms, stat_ptp, hjorth_activity, band_abs_delta, band_abs_theta, band_abs_alpha, band_abs_beta]
+  value_histogram_entropy_numerically_noninvariant: [stat_shannon_entropy]
+
+transport_invariant_feature_list: ["stat_F3_skew", "stat_F3_kurtosis", "hjorth_F3_mobility", "hjorth_F3_complexity", "spectral_F3_entropy", "band_rel_F3_delta", "band_rel_F3_theta", "band_rel_F3_alpha", "band_rel_F3_beta", "ratio_F3_theta_alpha", "ratio_F3_beta_alpha", "ratio_F3_theta_beta", "stat_F4_skew", "stat_F4_kurtosis", "hjorth_F4_mobility", "hjorth_F4_complexity", "spectral_F4_entropy", "band_rel_F4_delta", "band_rel_F4_theta", "band_rel_F4_alpha", "band_rel_F4_beta", "ratio_F4_theta_alpha", "ratio_F4_beta_alpha", "ratio_F4_theta_beta", "stat_F7_skew", "stat_F7_kurtosis", "hjorth_F7_mobility", "hjorth_F7_complexity", "spectral_F7_entropy", "band_rel_F7_delta", "band_rel_F7_theta", "band_rel_F7_alpha", "band_rel_F7_beta", "ratio_F7_theta_alpha", "ratio_F7_beta_alpha", "ratio_F7_theta_beta", "stat_F8_skew", "stat_F8_kurtosis", "hjorth_F8_mobility", "hjorth_F8_complexity", "spectral_F8_entropy", "band_rel_F8_delta", "band_rel_F8_theta", "band_rel_F8_alpha", "band_rel_F8_beta", "ratio_F8_theta_alpha", "ratio_F8_beta_alpha", "ratio_F8_theta_beta", "stat_O1_skew", "stat_O1_kurtosis", "hjorth_O1_mobility", "hjorth_O1_complexity", "spectral_O1_entropy", "band_rel_O1_delta", "band_rel_O1_theta", "band_rel_O1_alpha", "band_rel_O1_beta", "ratio_O1_theta_alpha", "ratio_O1_beta_alpha", "ratio_O1_theta_beta", "stat_O2_skew", "stat_O2_kurtosis", "hjorth_O2_mobility", "hjorth_O2_complexity", "spectral_O2_entropy", "band_rel_O2_delta", "band_rel_O2_theta", "band_rel_O2_alpha", "band_rel_O2_beta", "ratio_O2_theta_alpha", "ratio_O2_beta_alpha", "ratio_O2_theta_beta", "stat_T3_skew", "stat_T3_kurtosis", "hjorth_T3_mobility", "hjorth_T3_complexity", "spectral_T3_entropy", "band_rel_T3_delta", "band_rel_T3_theta", "band_rel_T3_alpha", "band_rel_T3_beta", "ratio_T3_theta_alpha", "ratio_T3_beta_alpha", "ratio_T3_theta_beta", "stat_T4_skew", "stat_T4_kurtosis", "hjorth_T4_mobility", "hjorth_T4_complexity", "spectral_T4_entropy", "band_rel_T4_delta", "band_rel_T4_theta", "band_rel_T4_alpha", "band_rel_T4_beta", "ratio_T4_theta_alpha", "ratio_T4_beta_alpha", "ratio_T4_theta_beta"]
+transport_excluded_feature_count: 88
+
+locked_channels: ['F3', 'F4', 'F7', 'F8', 'O1', 'O2', 'T3', 'T4']
+channel_mapping_mat_to_stew: {"F3": "F3", "F4": "F4", "F7": "F7", "F8": "F8", "O1": "O1", "O2": "O2", "T3": "T7", "T4": "T8"}
+window_seconds: 4.0
+overlap_fraction: 0.5
+segment_seconds: 30.0
+balanced_design: {calibration: first_30s_rest, scored_rest: 30_60s_rest, scored_task: first_30s_workload}
+model: {name: logistic_l2, C: 1.0, solver: liblinear, class_weight: balanced}
+mat_windows: 1512
+stew_windows: 2016
+status: exploratory_frozen_before_results

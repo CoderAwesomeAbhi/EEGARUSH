@@ -1,0 +1,128 @@
+{
+  "within_stew": [
+    {
+      "calibration": "absolute",
+      "model": "logistic_l2",
+      "n_subjects": 48,
+      "pooled_window_auc": 0.8003516510770976,
+      "macro_subject_mean_auc": 0.8157950680272109,
+      "macro_subject_median_auc": 0.8698979591836735,
+      "subject_auc_sd": 0.1976158763732707,
+      "subject_auc_ci95_low": 0.7585884353741498,
+      "subject_auc_ci95_high": 0.8673495960884353
+    },
+    {
+      "calibration": "mean_subtraction",
+      "model": "logistic_l2",
+      "n_subjects": 48,
+      "pooled_window_auc": 0.804063031462585,
+      "macro_subject_mean_auc": 0.839498299319728,
+      "macro_subject_median_auc": 0.9056122448979592,
+      "subject_auc_sd": 0.1780230346634826,
+      "subject_auc_ci95_low": 0.7884778911564626,
+      "subject_auc_ci95_high": 0.8879703443877551
+    },
+    {
+      "calibration": "zscore",
+      "model": "logistic_l2",
+      "n_subjects": 48,
+      "pooled_window_auc": 0.8907135770975058,
+      "macro_subject_mean_auc": 0.898703231292517,
+      "macro_subject_median_auc": 0.9285714285714286,
+      "subject_auc_sd": 0.1279866186943922,
+      "subject_auc_ci95_low": 0.8573554421768707,
+      "subject_auc_ci95_high": 0.9319727891156464
+    }
+  ],
+  "within_paired": [
+    {
+      "comparison": "mean_subtraction_minus_absolute",
+      "n_subjects": 48,
+      "mean_delta": 0.023703231292517,
+      "median_delta": 0.0102040816326531,
+      "ci95_low": -0.0131802721088435,
+      "ci95_high": 0.0607169430272107,
+      "bootstraps": 2000
+    },
+    {
+      "comparison": "mean_subtraction_minus_zscore",
+      "n_subjects": 48,
+      "mean_delta": -0.0592049319727891,
+      "median_delta": -0.0204081632653061,
+      "ci95_low": -0.1046981292517006,
+      "ci95_high": -0.0170014880952381,
+      "bootstraps": 2000
+    }
+  ],
+  "permutation": {
+    "observed_macro_subject_auc": 0.839498299319728,
+    "n_perm": 200,
+    "null_mean": 0.5020711096938776,
+    "null_ci95_low": 0.4588302508503402,
+    "null_ci95_high": 0.539907525510204,
+    "empirical_p": 0.0049751243781094
+  },
+  "transfer": [
+    {
+      "calibration": "absolute",
+      "direction": "MAT128_to_STEW",
+      "model": "logistic_l2",
+      "n_target_subjects": 48,
+      "pooled_window_auc": 0.4755084325396825,
+      "macro_subject_mean_auc": 0.4720450680272108,
+      "macro_subject_median_auc": 0.5280612244897959,
+      "subject_auc_sd": 0.2751762775557604,
+      "subject_auc_ci95_low": 0.396359481292517,
+      "subject_auc_ci95_high": 0.5478369472789115
+    },
+    {
+      "calibration": "mean_subtraction",
+      "direction": "MAT128_to_STEW",
+      "model": "logistic_l2",
+      "n_target_subjects": 48,
+      "pooled_window_auc": 0.4320569373582766,
+      "macro_subject_mean_auc": 0.4475977891156462,
+      "macro_subject_median_auc": 0.4464285714285714,
+      "subject_auc_sd": 0.2732691772011768,
+      "subject_auc_ci95_low": 0.3745748299319728,
+      "subject_auc_ci95_high": 0.5253082482993197
+    },
+    {
+      "calibration": "zscore",
+      "direction": "MAT128_to_STEW",
+      "model": "logistic_l2",
+      "n_target_subjects": 48,
+      "pooled_window_auc": 0.6922145160147393,
+      "macro_subject_mean_auc": 0.6828231292517007,
+      "macro_subject_median_auc": 0.7270408163265306,
+      "subject_auc_sd": 0.2320652061331458,
+      "subject_auc_ci95_low": 0.6141501913265306,
+      "subject_auc_ci95_high": 0.7474622661564625
+    }
+  ],
+  "transfer_paired": [
+    {
+      "comparison": "mean_subtraction_minus_absolute",
+      "n_subjects": 48,
+      "mean_delta": -0.0244472789115646,
+      "median_delta": -0.0153061224489796,
+      "ci95_low": -0.0700573979591836,
+      "ci95_high": 0.0226456207482992,
+      "bootstraps": 2000
+    },
+    {
+      "comparison": "mean_subtraction_minus_zscore",
+      "n_subjects": 48,
+      "mean_delta": -0.2352253401360544,
+      "median_delta": -0.1785714285714285,
+      "ci95_low": -0.3354618409863946,
+      "ci95_high": -0.1406143707482993,
+      "bootstraps": 2000
+    }
+  ],
+  "dropped_feature_families": "none",
+  "within_feature_count": 184,
+  "transport_feature_count": 96,
+  "stew_subjects": 48,
+  "mat_subjects": 36
+}
