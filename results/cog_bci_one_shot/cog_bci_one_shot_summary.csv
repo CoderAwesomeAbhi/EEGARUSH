@@ -1,0 +1,4 @@
+method,role,macro_subject_mean_auc,subject_auc_sd,subject_auc_ci95_low,subject_auc_ci95_high,above_chance,n_target_subjects
+zscore,primary,0.435961,0.200017,0.359602,0.509338,no,29
+mean_subtraction,primary_comparator,0.392153,0.234233,0.310697,0.476258,no,29
+absolute,secondary_comparator,0.367875,0.242358,0.28659,0.456725,no,29

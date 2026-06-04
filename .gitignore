@@ -21,3 +21,6 @@ results/stew_sensitivity/*.parquet
 *.parquet
 *.set
 *.fdt
+
+# one-shot run virtualenv (local only)
+.venv_oneshot/

@@ -1,0 +1,50 @@
+{
+  "metrics": [
+    {
+      "calibration": "absolute",
+      "direction": "MAT128_to_COGBCI",
+      "n_target_subjects": 29,
+      "macro_subject_mean_auc": 0.36787473610133703,
+      "subject_auc_sd": 0.2423578516324095,
+      "subject_auc_ci95_low": 0.28658954961294864,
+      "subject_auc_ci95_high": 0.45672501759324413
+    },
+    {
+      "calibration": "mean_subtraction",
+      "direction": "MAT128_to_COGBCI",
+      "n_target_subjects": 29,
+      "macro_subject_mean_auc": 0.3921534130893736,
+      "subject_auc_sd": 0.23423283137969178,
+      "subject_auc_ci95_low": 0.31069669247009146,
+      "subject_auc_ci95_high": 0.47625791695988745
+    },
+    {
+      "calibration": "zscore",
+      "direction": "MAT128_to_COGBCI",
+      "n_target_subjects": 29,
+      "macro_subject_mean_auc": 0.43596059113300495,
+      "subject_auc_sd": 0.20001685520775297,
+      "subject_auc_ci95_low": 0.3596015130190008,
+      "subject_auc_ci95_high": 0.5093376143560872
+    }
+  ],
+  "primary_comparison": {
+    "comparison": "zscore_minus_mean_subtraction",
+    "n_subjects": 29,
+    "mean_delta": 0.043807178043631226,
+    "median_delta": 0.010204081632653017,
+    "ci95_low": -0.07635907811400426,
+    "ci95_high": 0.17523311048557355
+  },
+  "secondary_comparison": {
+    "comparison": "zscore_minus_absolute",
+    "n_subjects": 29,
+    "mean_delta": 0.06808585503166784,
+    "median_delta": 0.09183673469387754,
+    "ci95_low": -0.06017329345531317,
+    "ci95_high": 0.19071516537649538
+  },
+  "zscore_observed_macro_subject_auc": 0.43596059113300495,
+  "n_perm_planned": 200,
+  "note": "permutation loop runs in full execution; structure frozen here"
+}
