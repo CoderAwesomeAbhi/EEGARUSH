@@ -168,8 +168,24 @@ Result of the exploratory within-STEW sensitivity + MAT→STEW transport stage
 - All 29 subjects' exact locked `ses-S1` inputs (`RS_Beg_EO`, `RS_End_EO`,
   `MATBdiff` × `.set`/`.fdt`) are materialized locally and SHA-256-recorded
   (`results/cog_bci_provenance/cog_bci_execution_input_hash_manifest.csv`).
-- Executable config is **frozen ready for a single prospective run**
+- Executable config was **frozen ready for a single prospective run**
   (`COG_BCI_EXECUTABLE_CONFIG.yaml`, `COG_BCI_RUN_ONCE_CHECKLIST.md`,
   `COG_BCI_EXECUTABLE_FREEZE_DECISION.md`,
-  `scripts/run_cog_bci_one_shot_prospective.py`). **No COG-BCI predictive metric has
-  been computed.** The one-shot test has **not** been run.
+  `scripts/run_cog_bci_one_shot_prospective.py`).
+
+### COG-BCI prospective test — executed once, FAILED (final)
+
+- The one-shot test was run **exactly once** (2026-06-04) and is now **consumed**.
+  See `COG_BCI_ONE_SHOT_PROSPECTIVE_RESULTS.md`,
+  `COG_BCI_FINAL_PROJECT_DECISION.md`, `results/cog_bci_one_shot/`.
+- MAT→COG-BCI transport macro subject-level ROC-AUC: **z-scoring 0.435961**
+  (below chance), mean subtraction 0.392153, absolute 0.367875 (n = 29).
+- Primary superiority ΔAUC (z-scoring − mean subtraction): mean +0.043807, paired
+  subject-bootstrap 95% CI **[−0.076359, +0.175233]** (includes zero).
+- **Classification: FAILURE** — z-scoring is at/below chance. The MAT→STEW z-scoring
+  elevation did **not** replicate; all three calibration strategies transport below
+  chance. Verdict: `PROSPECTIVE_ZSCORE_TRANSPORT_FAILED_WRITE_NEGATIVE_METHODS_PAPER`.
+- z-scoring transport is now **prospectively rejected**. Cross-device/cross-task
+  **transfer** of the MAT-trained decoder is **not supported** (extends the earlier
+  mean-subtraction transfer failure). Within-dataset MAT/STEW results are unchanged
+  and remain within-dataset evidence only. No rejected claim is revived.

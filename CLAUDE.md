@@ -129,17 +129,18 @@ detail. Summary:
   **Native-500-Hz COG-BCI analysis is forbidden** from the primary verdict. See
   `COG_BCI_PROTOCOL_AMENDMENT_SAMPLING_REPRESENTATION.md`.
 
-## COG-BCI Executable Freeze (ready; not yet run)
+## COG-BCI Prospective Test — RUN AND CONSUMED (failed)
 
-- Source verified (29/29), sampling ambiguity resolved by the amendment above, and
-  all 29 subjects' exact locked `ses-S1` inputs materialized locally + SHA-256
-  recorded. The executable config is **frozen ready for a single prospective run**
-  (`COG_BCI_EXECUTABLE_CONFIG.yaml`, `COG_BCI_RUN_ONCE_CHECKLIST.md`,
-  `COG_BCI_EXECUTABLE_FREEZE_DECISION.md`,
-  `scripts/run_cog_bci_one_shot_prospective.py`).
-- **No COG-BCI predictive metric has been computed.** The one-shot script requires
-  `--execute-locked-one-shot`, refuses if results exist, and verifies input/config/
-  script checksums. Run it **exactly once**, then report honestly.
+- The locked one-shot prospective test was executed **exactly once** (2026-06-04).
+  Results: `COG_BCI_ONE_SHOT_PROSPECTIVE_RESULTS.md`,
+  `COG_BCI_FINAL_PROJECT_DECISION.md`, `results/cog_bci_one_shot/`.
+- **Outcome: FAILURE.** MAT→COG-BCI transport macro subject AUC — z-scoring 0.4360
+  (below chance), mean subtraction 0.3922, absolute 0.3679; primary ΔAUC
+  (z − mean-sub) 95% CI [−0.0764, +0.1752] includes zero.
+- Verdict: `PROSPECTIVE_ZSCORE_TRANSPORT_FAILED_WRITE_NEGATIVE_METHODS_PAPER`.
+  z-scoring transport is now **prospectively rejected**, not merely unconfirmed.
+- **Do not rerun** the prospective test; it is consumed. Within-dataset MAT/STEW
+  findings remain valid and unchanged (within-dataset evidence only).
 
 ## Automatic GitHub Sync Policy
 
