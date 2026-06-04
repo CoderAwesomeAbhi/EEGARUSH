@@ -1,0 +1,5 @@
+model,comparison,n_subjects,mean_delta_auc,median_delta_auc,ci95_low,ci95_high,ci_excludes_zero,positive_ci_excludes_zero,bootstrap_resamples
+logistic_l2,mean_subtraction_minus_absolute,36,0.038548752834467126,0.03571428571428564,-0.0185657596371882,0.09311224489795916,False,False,10000
+logistic_l2,mean_subtraction_minus_zscore,36,0.06377551020408162,0.0331632653061224,0.011904761904761895,0.11748866213151926,True,True,10000
+linear_svm,mean_subtraction_minus_absolute,36,0.023242630385487545,0.020408163265306145,-0.02905328798185938,0.07171556122448977,False,False,10000
+linear_svm,mean_subtraction_minus_zscore,36,0.059948979591836746,0.02040816326530609,0.007086167800453513,0.11607142857142858,True,True,10000

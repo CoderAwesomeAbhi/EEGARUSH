@@ -1,0 +1,9 @@
+mat_locked_channel,stew_source_or_expected_channel,stew_cached_feature_channel,mapping_type,defensible_mapping,unjustified_approximation_required,note
+F3,F3,F3,exact_name_match,True,False,Exact shared feature name present in cached STEW table.
+F4,F4,F4,exact_name_match,True,False,Exact shared feature name present in cached STEW table.
+F7,F7,F7,exact_name_match,True,False,Exact shared feature name present in cached STEW table.
+F8,F8,F8,exact_name_match,True,False,Exact shared feature name present in cached STEW table.
+O1,O1,O1,exact_name_match,True,False,Exact shared feature name present in cached STEW table.
+O2,O2,O2,exact_name_match,True,False,Exact shared feature name present in cached STEW table.
+T3,T7,T3,legacy_10_20_equivalence_cached_as_legacy_name,True,False,"Original STEW montage uses modern T7/T8; existing repository code maps these to legacy MAT names T3/T4. This is documentable only as a named 10-20 equivalence, not as nearest-electrode substitution."
+T4,T8,T4,legacy_10_20_equivalence_cached_as_legacy_name,True,False,"Original STEW montage uses modern T7/T8; existing repository code maps these to legacy MAT names T3/T4. This is documentable only as a named 10-20 equivalence, not as nearest-electrode substitution."

@@ -1,0 +1,7 @@
+dataset,model,calibration,split_description,n_features,n_predictions,n_subjects,window_auc,subject_auc_mean,subject_auc_sd,n_subject_auc,protocol,subject_auc_ci95_low,subject_auc_ci95_high,feature_set
+MAT_RAW,logistic_l2,absolute,rest<60s calibration; rest>=60s + all arithmetic scored,184,3186,36,0.7160726847455242,0.7767619537526946,0.15746983209319415,36,reproduction,0.7230665968547914,0.8268211285028414,no_gamma_184
+MAT_RAW,logistic_l2,mean_subtraction,rest<60s calibration; rest>=60s + all arithmetic scored,184,3186,36,0.8220982378389785,0.835300558495003,0.1530571258947427,36,reproduction,0.783589671516755,0.8796077307466196,no_gamma_184
+MAT_RAW,logistic_l2,zscore,rest<60s calibration; rest>=60s + all arithmetic scored,184,3186,36,0.8732013471211002,0.8793148638056045,0.10284843882186975,36,reproduction,0.844675772829708,0.9109626628943758,no_gamma_184
+MAT_RAW,linear_svm,absolute,rest<60s calibration; rest>=60s + all arithmetic scored,184,3186,36,0.7116532130421019,0.7706163041348228,0.16079524577797324,36,reproduction,0.7176622942386831,0.8223767452968841,no_gamma_184
+MAT_RAW,linear_svm,mean_subtraction,rest<60s calibration; rest>=60s + all arithmetic scored,184,3186,36,0.8240309873025923,0.8359376837154616,0.1465877869321779,36,reproduction,0.7867473361258084,0.8787709619341564,no_gamma_184
+MAT_RAW,linear_svm,zscore,rest<60s calibration; rest>=60s + all arithmetic scored,184,3186,36,0.8677346030741093,0.8750747109543406,0.10953755946222986,36,reproduction,0.8395802652851264,0.9096347859102487,no_gamma_184

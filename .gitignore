@@ -12,4 +12,5 @@ outputs/synthetic_smoke_test/
 results/theory_validation/mplconfig/
 results/ds007262_confirmatory/raw_cache/
 results/ds007262_confirmatory/mplconfig/
+results/raw_provenance/mplconfig/
 .ipynb_checkpoints/
