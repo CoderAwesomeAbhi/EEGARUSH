@@ -24,3 +24,6 @@ results/stew_sensitivity/*.parquet
 
 # one-shot run virtualenv (local only)
 .venv_oneshot/
+
+# manuscript figure-generation virtualenv (local only)
+.manuscript_venv/

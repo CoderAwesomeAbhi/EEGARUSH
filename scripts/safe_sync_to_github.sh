@@ -12,6 +12,11 @@
 #   * Commit only known-safe text/result artifacts.
 #   * Push the feature branch and open (or locate) a DRAFT PR into main. Never merge.
 #
+# Manuscript-unlocked mode (explicit opt-in for an authorized manuscript task):
+#   Set MANUSCRIPT_UNLOCK=1 to also permit manuscript artifacts (paper/** sources,
+#   *.tex, manuscript *.pdf, and paper figures). Raw-data and raw/source-extension
+#   protections remain ABSOLUTE and are NOT relaxed by this flag.
+#
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
@@ -28,6 +33,13 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "${REPO_ROOT}"
 
 BASE_BRANCH="main"
+
+# Explicit manuscript-unlock flag (default off). Only relaxes the manuscript
+# guard; raw-data protections stay absolute.
+MANUSCRIPT_UNLOCK="${MANUSCRIPT_UNLOCK:-0}"
+if [[ "${MANUSCRIPT_UNLOCK}" == "1" ]]; then
+  echo "MANUSCRIPT_UNLOCK=1 — manuscript artifacts permitted (raw-data guards remain absolute)."
+fi
 
 # Approved small-test-fixture path prefix (none active yet; reserved for future).
 FIXTURE_PREFIX="tests/fixtures/"
@@ -62,6 +74,9 @@ fi
 # ---------------------------------------------------------------------------
 SAFE_REGEX='^(CLAUDE\.md|\.gitignore|requirements\.txt|docs/.*|scripts/.*|tests/.*|.*\.md|.*\.csv|.*\.png|.*\.ya?ml|.*\.json)$'
 
+# Manuscript artifacts permitted only when MANUSCRIPT_UNLOCK=1.
+MANUSCRIPT_REGEX='^(paper/.*|.*\.tex)$'
+
 # Files git considers changed (modified/untracked), excluding ignored ones.
 # (bash 3.2 compatible — no mapfile.)
 while IFS= read -r f; do
@@ -69,6 +84,8 @@ while IFS= read -r f; do
   # Skip anything under data/raw entirely.
   [[ "${f}" == data/raw/* ]] && continue
   if [[ "${f}" =~ ${SAFE_REGEX} ]]; then
+    git add -- "${f}"
+  elif [[ "${MANUSCRIPT_UNLOCK}" == "1" && "${f}" =~ ${MANUSCRIPT_REGEX} ]]; then
     git add -- "${f}"
   fi
 done < <(git status --porcelain=v1 --untracked-files=all \
@@ -97,16 +114,23 @@ done <<< "${STAGED_LIST}"
 
 # ---------------------------------------------------------------------------
 # 4. Manuscript guard during analysis-only phase.
+#    Skipped only when MANUSCRIPT_UNLOCK=1 (authorized manuscript task). The
+#    raw-data (step 2) and raw/source-extension (step 3) guards above are NOT
+#    affected by the flag and still apply.
 # ---------------------------------------------------------------------------
-while IFS= read -r f; do
-  [[ -z "${f}" ]] && continue
-  case "${f}" in
-    *main.tex|*.pdf)
-      abort "manuscript artifact staged: ${f} (blocked in analysis-only phase)." ;;
-    paper/*|*manuscript*|outputs_journal_upgrade/*|outputs_phd_revision/*)
-      abort "manuscript-output path staged: ${f} (blocked in analysis-only phase)." ;;
-  esac
-done <<< "${STAGED_LIST}"
+if [[ "${MANUSCRIPT_UNLOCK}" == "1" ]]; then
+  echo "NOTE: manuscript guard skipped (MANUSCRIPT_UNLOCK=1); raw-data guards still enforced."
+else
+  while IFS= read -r f; do
+    [[ -z "${f}" ]] && continue
+    case "${f}" in
+      *main.tex|*.pdf)
+        abort "manuscript artifact staged: ${f} (blocked in analysis-only phase)." ;;
+      paper/*|*manuscript*|outputs_journal_upgrade/*|outputs_phd_revision/*)
+        abort "manuscript-output path staged: ${f} (blocked in analysis-only phase)." ;;
+    esac
+  done <<< "${STAGED_LIST}"
+fi
 
 # ---------------------------------------------------------------------------
 # 5/6. Show the exact candidate staged-file list before committing.
