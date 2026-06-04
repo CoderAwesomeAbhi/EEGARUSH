@@ -81,6 +81,29 @@ whether MAT/STEW channel harmonization is defensible.
 Does subtracting each subject's resting EEG baseline produce a reproducible and
 transferable workload-decoding signal across provenance-valid EEG datasets?
 
+## Pivot After Failed Centering Transfer (current status)
+
+See `docs/EEGARUSH_CHECKPOINT.md` "Pivot After Failed Centering Transfer" for full
+detail. Summary:
+
+- **Proven:** mean-subtraction decodes workload above chance **within MAT**
+  (AUC 0.880102, p=0.004975) and **within STEW** (AUC 0.839498, p=0.004975).
+- **Rejected:** mean subtraction as a cross-device **transfer** method (MAT→STEW
+  transport failed, AUC 0.447598, below chance, not better than absolute);
+  any confirmed generalizable transfer; any invariant/universal axis.
+- **New hypothesis (post-hoc, unconfirmed):** under severe cross-device/task unit
+  & baseline-scale shift, **z-scoring may transport better than mean subtraction**
+  (MAT→STEW z-scoring AUC 0.682823, a secondary diagnostic). Audited valid for
+  hypothesis generation only; **must** be tested on an **untouched** dataset.
+  MAT/STEW are development-only.
+- **Do not** describe the z-scoring transfer as confirmed/replicated/successful.
+- A **metadata-only** untouched-dataset eligibility screen is now sanctioned
+  (this supersedes the earlier blanket "do not search" rule for *metadata
+  screening only*). **No signal/label download or modeling** of any new candidate
+  until it is selected and a fresh provenance audit passes.
+- Still binding: do not edit `main.tex`; do not re-analyze DS007262; do not commit
+  anything under `data/raw/`; do not use the MONSTER/HF STEW bundle for modeling.
+
 ## Automatic GitHub Sync Policy
 
 - After a completed and scientifically valid task, automatically sync safe outputs

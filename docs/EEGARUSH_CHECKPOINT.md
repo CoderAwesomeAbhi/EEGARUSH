@@ -92,3 +92,44 @@ No STEW models may run until that provenance audit passes.
   or a documented regeneration command.
 - It is **not** regenerated in this setup task (no scientific models are run, and
   regeneration would require raw MAT data that is intentionally git-ignored).
+
+## Pivot After Failed Centering Transfer (post-STEW)
+
+Result of the exploratory within-STEW sensitivity + MAT→STEW transport stage
+(`STEW_SENSITIVITY_AND_TRANSFER_DECISION.md`,
+`MAT_TO_STEW_EXPLORATORY_TRANSFER_RESULTS.md`,
+`POSTHOC_ZSCORE_TRANSPORT_AUDIT.md`).
+
+### Proven
+
+- The **mean-subtraction** configuration decodes workload **above chance within
+  MAT** (macro subject AUC 0.880102, permutation p = 0.004975, 500 Hz) **and
+  within STEW** (macro subject AUC 0.839498, permutation p = 0.004975, 128 Hz).
+
+### Rejected
+
+- **Mean subtraction as a supported cross-device transfer method.** The
+  predeclared MAT→STEW mean-subtraction transport **failed** (macro subject AUC
+  0.447598, below chance; vs absolute 0.472045; paired CI [−0.070, +0.023]
+  includes zero).
+- Any claim of **confirmed generalizable workload transfer**.
+- Any **invariant / universal workload axis** claim (still rejected).
+
+### Newly generated hypothesis (post-hoc, frozen for prospective test)
+
+- Across device/task domains with severe unit and baseline-scale differences,
+  **subject-level baseline standardization (z-scoring) may transport better than
+  baseline centering (mean subtraction) alone**. Observed only as a predeclared
+  *secondary diagnostic* (MAT→STEW z-scoring macro subject AUC 0.682823) and
+  **elevated post-hoc** after viewing transfer results.
+- This is **not** confirmed/replicated/successful transport evidence. The z-scoring
+  computation is technically valid and leakage-free
+  (`ZSCORE_OBSERVATION_VALID_FOR_NEW_HYPOTHESIS_GENERATION`), but because it was
+  generated after observing MAT→STEW results it **requires an untouched
+  prospective evaluation dataset**. MAT and STEW count only as development
+  evidence; neither may serve as prospective validation.
+- The frozen prospective plan is `REVISED_ZSCORE_PROSPECTIVE_EVALUATION_PROTOCOL.md`.
+- A **metadata-only** screen for an untouched, baseline-bearing, construct-matched
+  dataset is now sanctioned (`UNTOUCHED_DATASET_ELIGIBILITY_SCREEN.md`); **no
+  signal/label download or analysis** of any candidate is permitted until a
+  dataset is selected and a fresh provenance audit passes.
