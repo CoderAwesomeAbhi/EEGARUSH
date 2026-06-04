@@ -24,10 +24,12 @@
   urlcolor=blue
 }
 
-\title{\textbf{Baseline-Relative EEG Workload Decoding Replicates in Exploratory Datasets but Fails a Frozen Graded External Transfer Test}}
+\title{\textbf{Strong Within-Domain EEG Workload Decoding Fails to Transport
+Across Heterogeneous Task and Device Domains: A Prospectively Evaluated
+Negative Methods Study}}
 
-\author[1]{Abhijay Gangarapu$^{\ast}$}
 \author[1]{Arush Ravipati$^{\ast}$}
+\author[1]{Abhijay Gangarapu$^{\ast}$}
 \affil[1]{Independent Researcher}
 
 \date{June 2026}
@@ -41,435 +43,521 @@
 \endgroup
 
 \begin{abstract}
-EEG workload classifiers often perform well in within-dataset analyses but
-can fail when tested on unseen people or different task designs. We evaluated
-a baseline-relative workload decoding protocol using public arithmetic EEG
-datasets and separated exploratory validation from a frozen external test.
-In the exploratory datasets, subject-specific z-scoring against resting
-baseline improved leave-one-subject-out workload decoding relative to
-absolute features and mean subtraction. With an 8-channel intersection
-(F3, F4, F7, F8, O1, O2, T3, T4) and 200 per-channel features, z-scored
-L2 logistic regression achieved MAT window ROC-AUC = 0.865995, and
-z-scored linear SVM achieved STEW window ROC-AUC = 0.791896. Negative-control
-permutations were significant for the best MAT and STEW exploratory
-configurations (empirical p = 0.000999 for both). However, feature-direction
-stability between MAT and STEW was not demonstrated: for z-scored L2
-logistic regression, the MAT--STEW coefficient correlation was
-$r = 0.0136403$ ($p = 0.847975$). We then froze the best single exploratory
-pipeline across MAT and STEW (subject z-scoring, median imputation,
-standard scaling, L2 logistic regression, C = 1.0) and applied it without
-retraining to OpenNeuro DS007262. The confirmatory graded workload test
-failed: subject-level Spearman correlation between frozen decision score and
-ordinal difficulty was $\rho = -0.0176745$ with one-sided
-$p = 0.577865$ across 18 subjects and 1,134 scored trials. These results
-support baseline-relative calibration as a useful exploratory preprocessing
-step for within-paradigm EEG workload decoding, but they do not support a
-universal or monotonic cross-dataset workload axis.
+EEG cognitive-workload classifiers frequently achieve high accuracy
+\textit{within} a single dataset, yet within-dataset performance is not
+evidence that a decoder \textit{transports} to a new device, task, or cohort.
+We separate these two questions with a sequential, preregistration-style design
+across three provenance-distinct datasets: PhysioNet EEG During Mental
+Arithmetic Tasks (MAT; development), STEW (an exploratory, non-comparable
+cross-task/cross-device sensitivity dataset), and COG-BCI (Hinss et al.\ 2023;
+a single untouched prospective test). Within each development dataset,
+subject-baseline mean-subtraction calibration decoded workload above chance at
+the subject level: macro subject-level ROC-AUC was $0.880102$ within MAT
+(full-pipeline within-subject label-permutation $p = 0.004975$, 200
+permutations) and $0.839498$ within STEW ($p = 0.004975$). Mean subtraction was
+not proven superior to absolute features in either dataset (paired confidence
+intervals crossed zero). When the frozen, unit-compatible pipeline was applied
+across datasets, the predeclared MAT$\rightarrow$STEW mean-subtraction
+\textit{transport failed} (macro subject AUC $0.447598$, below chance, not
+better than absolute $0.472045$). A post-hoc z-scoring observation on the same
+transport (AUC $0.682823$) was the only above-chance mode; we treated it strictly
+as a hypothesis to be tested, froze the entire pipeline, and evaluated it
+\textit{exactly once} on untouched COG-BCI. That prospective test also failed:
+all three calibration modes transported below chance (z-scoring $0.435961$, mean
+subtraction $0.392153$, absolute $0.367875$; $n = 29$), and the primary paired
+contrast (z-scoring $-$ mean subtraction) had mean $\Delta = +0.043807$ with a
+$95\%$ CI $[-0.076359, +0.175233]$ that includes zero. Under the specific
+task/device/reference shifts tested here, baseline-relative preprocessing
+supported within-dataset workload discrimination but did \textit{not} provide
+supported transportability of a MAT-trained workload decoder. We report this as
+a rigorous negative transport/reproducibility result.
 \end{abstract}
 
 \section{Introduction}
 
-Cognitive workload is commonly associated with changes in theta- and
-alpha-band EEG activity during arithmetic, working memory, and attention
-tasks \cite{klimesch1999, gevins1997, zyma2019}. These signatures motivate
-EEG-based workload monitoring, but they do not by themselves establish
-generalizable prediction. Scalp EEG features also encode stable differences
-between participants, reference montages, electrode layouts, task timing,
-and recording systems. A model can therefore perform well by exploiting
-subject- or dataset-specific structure rather than a task-general workload
-signal \cite{lotte2018}.
+Cognitive workload modulates theta- and alpha-band EEG activity during
+arithmetic, working-memory, and attention tasks
+\cite{klimesch1999, gevins1997, zyma2019}. These signatures motivate EEG-based
+passive brain--computer interfaces and workload monitors, but they do not by
+themselves establish \textit{generalizable} prediction. Scalp EEG features also
+encode stable differences between participants, reference montages, electrode
+layouts, amplifier hardware, task timing, and recording systems. A model can
+therefore score well by exploiting subject- or dataset-specific structure
+rather than a task-general workload signal \cite{lotte2018, jayaram2016}. The
+central methodological problem we address is the gap between within-dataset
+decoding and cross-domain transport: leave-one-subject-out (LOSO) accuracy
+inside one dataset is routinely high, yet that number is not a measurement of
+whether the same decoder works on a different device and task
+\cite{zanini2018, congedo2017}.
 
-The present manuscript tests the \textit{Baseline-Relative Workload Transfer
-Hypothesis}: if workload-relevant EEG changes are partly shared across
-subjects and datasets, then expressing each subject's task windows relative
-to that subject's resting baseline should improve within-dataset decoding
-and should produce a monotonic increase in frozen model score across graded
-external workload levels. This hypothesis has two separable parts. The
-exploratory part asks whether baseline-relative calibration improves
-classification in datasets with rest-versus-task labels. The confirmatory
-part asks whether a frozen model trained on exploratory data scales
-monotonically with difficulty in an untouched graded external dataset.
+Subject-relative calibration is a natural candidate for closing that gap.
+Expressing each subject's task windows relative to that subject's own resting
+baseline --- by subtracting the baseline mean (mean subtraction) or by
+standardizing to baseline mean and standard deviation (z-scoring) --- is a
+plausible route to features that are less sensitive to per-subject and
+per-device offsets and scales \cite{vidaurre2011}. We emphasize at the outset
+that baseline-relative calibration is introduced here only as a candidate
+calibration step, \textbf{not} as a proven mechanism and \textbf{not} as a
+claim about neural generators.
 
-We evaluated this hypothesis using three public EEG datasets: PhysioNet EEG
-During Mental Arithmetic Tasks (MAT) \cite{physionet_eegmat, zyma2019,
-goldberger2000}, STEW \cite{stew_dataset}, and OpenNeuro DS007262
-\cite{openneuro_ds007262}. The analysis was deliberately constrained to
-results that were actually executed in the repository. We do not report
-unverified coupling analyses, source reconstruction, or anatomical generator
-claims, because those analyses were not part of the verified validation
-pipeline. The central question is methodological: which workload claims
-survive strict subject-wise validation and a frozen external graded test?
+This manuscript asks one question: does subtracting or standardizing each
+subject's resting EEG baseline produce a workload-decoding signal that
+\textit{transfers} across provenance-distinct EEG datasets (different devices
+and tasks), or only \textit{within} each dataset? We answer it with a
+deliberately sequential, hypothesis-controlled design. Two datasets (MAT and
+STEW) are used only for development; a third dataset (COG-BCI) is held
+completely untouched and used for a single, checksum-locked prospective test of
+the one hypothesis that the development phase generated. We report every
+decisive outcome exactly as executed, including the failures, and constrain all
+claims to analyses that were actually run in the repository. We do not report
+coupling analyses, source reconstruction, anatomical-generator claims, or any
+graded cross-dataset confirmation, because those analyses are not part of the
+verified evidence behind this paper.
 
 \section{Materials and Methods}
 
-\subsection{Datasets}
+\subsection{Sequential hypothesis-control design}
 
-\textbf{MAT.} The MAT dataset includes 36 participants with resting and
-mental arithmetic EEG blocks recorded at 256 Hz using a 19-channel 10--20
-montage \cite{physionet_eegmat, zyma2019}. Files ending in
-\texttt{\_1.edf} were treated as rest and files ending in \texttt{\_2.edf}
-as arithmetic.
+The study has three stages with fixed, non-interchangeable roles
+(Figure~\ref{fig:flow}). \textbf{Development:} MAT and STEW are used to develop
+and stress-test the candidate calibration method and to generate hypotheses.
+\textbf{Post-hoc hypothesis:} an observation made \textit{after} viewing the
+MAT$\rightarrow$STEW transport is allowed to generate a single new hypothesis,
+which is then frozen. \textbf{Prospective test:} COG-BCI is an untouched
+dataset reserved for exactly one evaluation of the frozen hypothesis. MAT and
+STEW count only as development evidence and may not serve as prospective
+validation; COG-BCI is never inspected or modeled until its frozen protocol and
+a provenance audit have passed.
 
-\textbf{STEW.} The STEW dataset includes 48 participants recorded at
-128 Hz with a 14-channel Emotiv EPOC+ headset during baseline and mental
-arithmetic workload conditions \cite{stew_dataset}. STEW channel names were
-mapped to the closest standard 10--20 labels where needed.
+\subsection{Datasets and raw-data provenance}
 
-\textbf{DS007262.} OpenNeuro DS007262 contains arithmetic trials with graded
-difficulty ranges and 19-channel EEG recorded at 250 Hz
-\cite{openneuro_ds007262}. The local event files used in the frozen
-confirmatory analysis exposed seven non-tutorial numeric difficulty ranges
-from 0.6--1.5 through 6.0--6.9. The confirmatory analysis scored all
-available non-tutorial numeric task trials rather than inventing an eighth
-level.
+Dataset roles, devices, sampling rates, baselines, and subject counts are
+summarized in Table~\ref{tab:datasets}.
 
-\subsection{Frozen Feature Space}
+\textbf{MAT (development).} The PhysioNet EEG During Mental Arithmetic Tasks
+dataset \cite{physionet_eegmat, zyma2019, goldberger2000} was audited from the
+official raw EDF files: 36 subjects, 72 EDF files, 500\,Hz, microvolt units, a
+standard 10--20 montage. Files ending in \texttt{\_1} are rest/background and
+files ending in \texttt{\_2} are mental arithmetic. A corrected balanced
+protocol was used with equal scored-rest and scored-task window counts per
+subject and no overlap between calibration and scored segments.
 
-All validation analyses used the same 8-channel intersection across MAT,
-STEW, and DS007262: F3, F4, F7, F8, O1, O2, T3, and T4. For each channel,
-25 per-channel features were used, yielding 200 features total. The feature
-templates were time-domain moments and morphology, Hjorth parameters,
-Shannon entropy, spectral entropy, absolute and relative bandpower in delta,
-theta, alpha, beta, and gamma bands, and theta/alpha, beta/alpha, and
-theta/beta ratios. The exact feature definition is locked in
-\texttt{FROZEN\_CONFIG.yaml}.
+\textbf{STEW (exploratory sensitivity).} The STEW dataset
+\cite{stew_dataset} comprises 48 subjects recorded at 128\,Hz with a 14-channel
+Emotiv EPOC+ headset under low- versus high-workload multitasking conditions.
+STEW is explicitly treated as a \textbf{non-comparable} cross-task/cross-device
+sensitivity dataset, \textbf{not} a strict replication: it differs from MAT in
+task, device, montage, reference, sampling rate, and amplitude units. The
+official IEEE DataPort STEW source was used; per-subject calibration, scored
+rest, and scored task were drawn from disjoint segments (14/14/14 windows per
+subject).
 
-\subsection{Exploratory Baseline-Calibration Comparison}
+\textbf{COG-BCI (untouched prospective test).} The COG-BCI database
+\cite{hinss2023} provides multi-session EEG including a Multi-Attribute Task
+Battery (MATB) and resting-state recordings on a BrainProducts system. A
+source provenance audit confirmed 29 readable subjects, the eight required
+channels, 500\,Hz sampling, and the presence of eyes-open rest and
+MATB-difficult conditions. The primary paradigm was predeclared as MATB
+(highest level $=$ MATB difficult), chosen by construct match to MAT arithmetic
+\textbf{before} any outcome was seen; N-back, eyes-closed rest, other MATB
+levels, and sessions S2/S3 were prespecified out of scope and were never
+analyzed.
 
-For MAT and STEW, the repository implemented strict leave-one-subject-out
-(LOSO) validation. In each fold, the held-out subject was excluded from
-calibration statistics, imputation, scaling, and model fitting. The
-exploratory comparison tested three feature representations:
-\begin{enumerate}
-    \item absolute features;
-    \item mean subtraction relative to subject baseline;
-    \item z-scoring relative to subject baseline.
-\end{enumerate}
+\subsection{Frozen feature space and unit-incompatibility audit}
 
-MAT used the first 60 seconds of resting windows as calibration rows and
-excluded those rows from scoring. STEW did not contain timing metadata in
-the cached parquet table, so the first 50\% of each subject's rest rows by
-row order were used as calibration rows. L2 logistic regression and linear
-SVM were evaluated with fixed C = 1.0; no label-dependent hyperparameter
-search was performed in these confirmatory validation scripts.
+Within-dataset analyses used a frozen no-gamma 184-feature, 8-channel family.
+Gamma bands were removed. Cross-dataset transport, however, faces a unit
+problem: MAT amplitudes are in microvolts, whereas STEW values are undocumented
+raw 16-bit Emotiv counts for which no verified microvolt conversion exists
+(archive, IEEE page, and publication were all checked). We therefore restricted
+all transport analyses to the \textbf{96 features proven invariant under the
+positive affine transform $x \rightarrow a\,x + b$ ($a > 0$)}: skewness,
+kurtosis, Hjorth mobility, Hjorth complexity, spectral entropy, relative
+bandpower in $\delta$, $\theta$, $\alpha$, $\beta$, and the $\theta/\alpha$,
+$\beta/\alpha$, $\theta/\beta$ ratios, across the 8 channels. Amplitude,
+variance, absolute power, Hjorth activity, and Shannon entropy were excluded
+because they are not scale/offset invariant. The eight harmonized channels were
+F3, F4, F7, F8, O1, O2, T7$\rightarrow$T3, and T8$\rightarrow$T4.
 
-\subsection{Calibration-Duration Curve}
+\subsection{Sampling representation (transparent amendment)}
 
-For MAT, the resting baseline duration was varied from 1 second upward in
-2-second increments. For each duration, the same fixed-C LOSO logistic
-regression protocol was rerun. The plateau was defined as the first
-duration within 0.01 ROC-AUC of the maximum valid ROC-AUC. STEW did not
-support this analysis because the cached table did not include timing
-metadata.
+The transport-compatible feature set is scale- and offset-invariant but is
+\textbf{not} sampling-rate-invariant. Because the development transport pipeline
+(MAT$\rightarrow$STEW) trained the source model at 128\,Hz, both the source
+(MAT) and the target (COG-BCI) must be represented at the same rate. An earlier
+draft of the COG-BCI protocol stated ``500\,Hz native --- no resample,'' which
+conflicted with the frozen 128\,Hz transport representation. This was corrected
+\textbf{before any COG-BCI predictive metric was computed} and purely for
+representational consistency: both MAT and COG-BCI are resampled from 500\,Hz to
+128\,Hz with \texttt{scipy.signal.resample\_poly} (\texttt{up=32},
+\texttt{down=125}) before the frozen 96 features are extracted. Native-500-Hz
+COG-BCI analysis was forbidden from the primary verdict. This amendment changed
+only the sampling representation, not the model, features, channels, endpoint,
+or comparator.
 
-\subsection{Effect-Direction Stability}
+\subsection{Calibration modes}
 
-To test whether a shared signed feature direction was present across
-exploratory datasets, the fitted coefficient vectors from MAT and STEW
-models were correlated using Pearson correlation for each model and
-calibration condition. This analysis tests coefficient-direction stability;
-it is not a source-localization analysis and cannot establish anatomical
-invariance.
+Three feature representations were compared throughout: (1) absolute features;
+(2) mean subtraction relative to the subject's resting baseline (the
+development-selected candidate); and (3) z-scoring relative to the subject's
+resting baseline (a predeclared secondary diagnostic). In every transport
+analysis, per-subject calibration statistics were computed from the subject's
+\textbf{unlabeled} resting-baseline segment only, disjoint from the scored
+segments.
 
-\subsection{Negative Controls}
+\subsection{Model, evaluation, and leakage controls}
 
-The repository implemented 1,000 within-subject label permutations on
-nested out-of-fold scores for the best observed MAT and STEW exploratory
-configurations. The empirical p-value was computed as
-\[
-p = \frac{1 + \#(\mathrm{null\ AUC} \geq \mathrm{observed\ AUC})}{1 + N_{\mathrm{valid\ permutations}}}.
-\]
-These controls test score-label association in the out-of-fold predictions;
-they do not replace retrained permutation tests.
+The fixed model was L2-regularized logistic regression
+($C = 1.0$, \texttt{solver = liblinear}, \texttt{class\_weight = balanced},
+\texttt{max\_iter = 5000}) \cite{sklearn}; no label-dependent hyperparameter
+search was performed. The primary unit of inference was macro subject-level
+ROC-AUC. Within-dataset analyses used strict LOSO: in each fold the held-out
+subject contributed nothing to calibration statistics, imputation, scaling, or
+model fitting. Transport analyses fit the imputer, scaler, and model on the
+\textbf{source dataset only} and used target labels solely to score, never to
+fit, select, preprocess, or tune. Uncertainty was quantified by subject-level
+bootstrap confidence intervals, and within-dataset significance by full-pipeline
+within-subject label-permutation nulls (200 permutations, full LOSO refit per
+permutation). EEG I/O used MNE-Python \cite{mne, gramfort2013}.
 
-\subsection{Frozen DS007262 Confirmatory Test}
+\subsection{COG-BCI untouched one-shot prospective protocol}
 
-The single model frozen for DS007262 was selected before viewing DS007262
-graded scores: subject z-scoring, median imputation, standard scaling, and
-L2 logistic regression with C = 1.0, \texttt{solver = liblinear},
-\texttt{class\_weight = balanced}, \texttt{max\_iter = 5000}, and
-\texttt{random\_state = 20260602}. This choice had the best mean exploratory
-MAT/STEW window ROC-AUC among the tested single-model options. The model was
-trained on MAT and STEW scored rows only. No DS007262 rows were used for
-model fitting, model selection, feature selection, or hyperparameter tuning.
+The COG-BCI test was frozen, checksum-locked, input-hash-verified, and executed
+exactly once. The frozen configuration trained on MAT only (rest versus
+arithmetic). The target was COG-BCI \texttt{ses-S1}: the unlabeled
+calibration baseline was the first 30\,s of \texttt{RS\_Beg\_EO} (eyes-open
+rest); scored rest was the first 30\,s of \texttt{RS\_End\_EO} (label 0); scored
+workload was the first 30\,s of \texttt{MATBdiff} (label 1). Windows were 4\,s
+with 50\% overlap, yielding 14 rest and 14 task windows per subject; all 29
+subjects were scored with no pre-outcome exclusion. The primary endpoint was the
+macro subject-level ROC-AUC of z-scoring; the primary comparison was the paired
+subject-bootstrap $\Delta$AUC of z-scoring minus mean subtraction. The locked
+classification rule was: \emph{full success} requires z-scoring above chance and
+a primary CI excluding zero positively; \emph{partial} requires z-scoring above
+chance with the CI including zero; \emph{failure} otherwise (z-scoring at/below
+chance, or not outperforming mean subtraction). No retuning, task switching,
+channel expansion, feature reselection, or endpoint change was permitted after
+outcomes were accessed.
 
-For each DS007262 subject, the first 60 seconds after the
-\texttt{started\_tutorial\_artihmetic} event marker were used as
-baseline-calibration data and split into non-overlapping 6-second windows.
-All non-tutorial numeric arithmetic trials with positive duration were
-scored. The primary confirmatory statistic was Spearman correlation between
-ordinal workload level and frozen logistic-regression decision score after
-averaging scores within each subject-level difficulty bin. The prespecified
-success criterion required at least 12 readable subjects, at least 6
-available difficulty levels, positive one-sided Spearman p < 0.05, and
-$\rho \geq 0.20$.
+\subsection{Run-once controls and reproducibility}
+
+The frozen run materials (configuration YAML and execution script) were
+SHA-256-checksummed before execution; the run-time record and the live committed
+files were verified byte-identical. A single run marker
+(\texttt{RUN\_MARKER.json}) records one execution, and the script aborts if any
+result output already exists, preventing a second result-producing run. All 29
+locked input files were SHA-256-recorded in an input-hash manifest. An
+independent read-only integrity audit confirmed exactly one execution, internal
+consistency of all reported values across JSON/CSV/Markdown, alignment of
+checksums, and that the failure classification follows the predeclared rule.
 
 \section{Results}
 
-\subsection{Baseline-Relative Calibration Improved Exploratory Decoding}
+\subsection{Provenance and pipeline validity}
 
-Z-scoring relative to subject baseline was the strongest calibration strategy
-in both exploratory datasets (Table~\ref{tab:calibration}). In MAT,
-z-scored L2 logistic regression achieved window ROC-AUC = 0.865995 across
-3,186 predictions from 36 subjects. In STEW, z-scored linear SVM achieved
-window ROC-AUC = 0.791896 across 1,519 predictions from 48 subjects, while
-z-scored L2 logistic regression was nearly identical at ROC-AUC = 0.791446.
-Absolute features and mean subtraction were weaker in STEW, and absolute
-features were weaker than z-scoring in MAT.
+Raw MAT EDFs were integrity-verified (72/72 SHA-256 matched the validated MAT
+provenance manifest). The STEW measurement-unit ambiguity was resolved
+conservatively by restricting transport to the 96 positive-affine-invariant
+features, frozen before any transfer result was viewed. For COG-BCI, the source
+provenance audit passed (29/29 subjects readable, 8 locked channels, eyes-open
+rest and MATB-difficult present), the frozen config/script checksums matched the
+run-time and committed files exactly, and the one-shot script ran cleanly to
+completion. The leakage-free design (source-only fitting; unlabeled-baseline
+calibration; disjoint calibration and scored segments) was verified.
+
+\subsection{Within-MAT workload decoding is above chance}
+
+Within MAT, mean-subtraction calibration decoded rest versus mental arithmetic
+above chance at the subject level: macro subject-level ROC-AUC $= 0.880102$
+(Table~\ref{tab:within}, Figure~\ref{fig:within}). The full-pipeline
+within-subject label-permutation null had mean $0.500600$, $95\%$ interval
+$[0.441057, 0.553729]$, and empirical $p = 0.004975$ (200 permutations).
+Mean subtraction was \textbf{not} proven superior to absolute features
+($0.841553$): the paired mean-subtraction $-$ absolute $95\%$ CI
+$[-0.018566, +0.093112]$ includes zero. This is a within-dataset result only.
+
+\subsection{Within-STEW exploratory sensitivity}
+
+Within STEW, mean-subtraction calibration decoded low versus high workload above
+chance at the subject level: macro subject-level ROC-AUC $= 0.839498$
+(permutation null mean $0.502071$, $95\%$ $[0.458830, 0.539908]$,
+$p = 0.004975$). As in MAT, mean subtraction was not proven superior to absolute
+features ($0.815795$; paired CI $[-0.013180, +0.060717]$ includes zero).
+z-scoring was numerically highest within STEW ($0.898703$) but is a secondary
+diagnostic only; per the frozen protocol the candidate method was not switched
+because STEW favored z-scoring. STEW remains exploratory, cross-task,
+cross-device, and non-comparable --- supportive sensitivity evidence
+\textit{inside} STEW, not replication or confirmation.
+
+\subsection{MAT$\rightarrow$STEW mean-subtraction transport fails}
+
+This is the central negative pivot. Under the frozen, unit-invariant transport
+pipeline (train on MAT only, test on STEW), the predeclared candidate (mean
+subtraction) \textbf{failed to transport}: macro subject AUC $= 0.447598$,
+\textit{below chance}, and not better than absolute ($0.472045$; paired CI
+$[-0.070057, +0.022646]$ includes zero) (Table~\ref{tab:transport},
+Figure~\ref{fig:transport}). Strong within-dataset decoding (0.84--0.88) did not
+carry over to a different device and task.
+
+\subsection{Post-hoc z-scoring observation (hypothesis-generating only)}
+
+Of the three modes, only z-scoring transported above chance on
+MAT$\rightarrow$STEW (macro subject AUC $= 0.682823$). Although the z-scoring
+computation was predeclared and verified leakage-free, its
+\textit{elevation as a method of interest} occurred only \textit{after} viewing
+the transport results, so it is post-hoc. We therefore treated it strictly as
+\textbf{hypothesis-generating}, not as confirmatory evidence: a single new
+hypothesis --- that under severe cross-device/task scale shift, subject-level
+standardization might transport better than centering --- to be frozen and
+tested once on an untouched dataset. We do not claim z-scoring transfers.
+
+\subsection{Frozen one-shot COG-BCI prospective test fails below chance}
+
+The frozen hypothesis was tested exactly once on untouched COG-BCI. All three
+calibration modes transported \textit{below chance}: z-scoring $0.435961$
+(subject-bootstrap $95\%$ CI $[0.359602, 0.509338]$), mean subtraction
+$0.392153$, and absolute $0.367875$ ($n = 29$; Table~\ref{tab:cogbci},
+Figure~\ref{fig:cogbci}). The primary paired contrast, z-scoring minus mean
+subtraction, had mean $\Delta = +0.043807$ with a $95\%$ CI
+$[-0.076359, +0.175233]$ that includes zero; the secondary contrast (z-scoring
+minus absolute) was $+0.068086$, CI $[-0.060173, +0.190715]$, also including
+zero. Under the locked rule, z-scoring is below chance, so the above-chance
+precondition for success or partial success is not met, and the primary
+superiority CI includes zero. The classification is \textbf{failure}: the
+MAT$\rightarrow$STEW z-scoring elevation did not replicate.
+
+\subsection{Final decision}
+
+Combining the predeclared MAT$\rightarrow$STEW mean-subtraction transport failure
+with the prospective COG-BCI failure of the post-hoc z-scoring hypothesis,
+cross-device/cross-task \textbf{transfer} of the MAT-trained decoder is
+\textbf{not supported} under the tested domain shifts, for any of absolute, mean
+subtraction, or z-scoring calibration. The within-dataset MAT and STEW findings
+are unchanged and remain within-dataset evidence only. The project verdict was
+recorded as \texttt{PROSPECTIVE\_ZSCORE\_TRANSPORT\_FAILED\_WRITE\_NEGATIVE\_METHODS\_PAPER}.
 
 \begin{table}[ht]
 \centering
-\caption{Exploratory LOSO baseline-calibration comparison using 200 frozen 8-channel features.}
-\label{tab:calibration}
+\caption{Datasets and their fixed roles in the sequential design.}
+\label{tab:datasets}
 \small
 \adjustbox{max width=\textwidth}{%
-\begin{tabular}{lllrrrr}
+\begin{tabular}{lllllr}
 \toprule
-Dataset & Model & Calibration & N subjects & N predictions & Window ROC-AUC & Subject AUC mean \\
+Dataset & Role & Task / contrast & Baseline & Device / sampling & Subjects \\
 \midrule
-MAT & L2 logistic & z-score & 36 & 3186 & 0.865995 & 0.874355 \\
-MAT & linear SVM & z-score & 36 & 3186 & 0.858511 & 0.865624 \\
-MAT & L2 logistic & mean subtraction & 36 & 3186 & 0.826001 & 0.843782 \\
-MAT & L2 logistic & absolute & 36 & 3186 & 0.736025 & 0.792007 \\
-STEW & linear SVM & z-score & 48 & 1519 & 0.791896 & 0.810585 \\
-STEW & L2 logistic & z-score & 48 & 1519 & 0.791446 & 0.806968 \\
-STEW & L2 logistic & absolute & 48 & 1519 & 0.723308 & 0.737614 \\
-STEW & L2 logistic & mean subtraction & 48 & 1519 & 0.694381 & 0.742161 \\
+MAT & Development & Rest vs.\ mental arithmetic & Resting block & 10--20, $\mu$V, 500\,Hz & 36 \\
+STEW & Exploratory sensitivity & Low vs.\ high workload & Low-load segment & Emotiv EPOC+ 14ch, counts, 128\,Hz & 48 \\
+COG-BCI & Untouched prospective test & Eyes-open rest vs.\ MATB-difficult & Eyes-open rest & BrainProducts, $\mu$V, 500\,Hz$\rightarrow$128\,Hz & 29 \\
+\bottomrule
+\end{tabular}}
+\par\vspace{2pt}
+\footnotesize STEW units are undocumented raw 16-bit counts; cross-dataset
+transport therefore used only the 96 scale/offset-invariant features. COG-BCI
+was resampled to 128\,Hz to match the frozen transport representation.
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Within-domain subject-level decoding (L2 logistic regression, LOSO).
+Mean subtraction is above chance within each dataset but not proven superior to
+absolute features (paired CIs include zero). z-scoring within STEW is a
+secondary diagnostic only.}
+\label{tab:within}
+\small
+\begin{tabular}{lllr}
+\toprule
+Dataset & Calibration & Macro subject AUC & Permutation $p$ \\
+\midrule
+MAT  & absolute              & 0.841553 & --- \\
+MAT  & mean subtraction      & \textbf{0.880102} & 0.004975 \\
+MAT  & z-scoring (diagnostic)& 0.816327 & --- \\
+STEW & absolute              & 0.815795 & --- \\
+STEW & mean subtraction      & \textbf{0.839498} & 0.004975 \\
+STEW & z-scoring (diagnostic)& 0.898703 & --- \\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}
+\footnotesize Paired mean-subtraction $-$ absolute $95\%$ CIs:
+MAT $[-0.018566, +0.093112]$; STEW $[-0.013180, +0.060717]$ (both include zero).
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{MAT$\rightarrow$STEW exploratory transport (train MAT, test STEW; 96
+scale/offset-invariant features; 48 target subjects). The predeclared candidate
+(mean subtraction) transports below chance; z-scoring is the only above-chance
+mode and is post-hoc/hypothesis-generating only.}
+\label{tab:transport}
+\small
+\begin{tabular}{lrl}
+\toprule
+Calibration & Macro subject AUC & Above chance? \\
+\midrule
+absolute               & 0.472045 & No \\
+mean subtraction (candidate) & \textbf{0.447598} & No (below chance) \\
+z-scoring (post-hoc diagnostic) & 0.682823 & Yes \\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}
+\footnotesize Paired mean-subtraction $-$ absolute $95\%$ CI
+$[-0.070057, +0.022646]$ (includes zero).
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{COG-BCI untouched one-shot prospective test (MAT$\rightarrow$COG-BCI;
+29 target subjects). All three modes transport below chance; the primary paired
+contrast includes zero. Classification: failure.}
+\label{tab:cogbci}
+\small
+\adjustbox{max width=\textwidth}{%
+\begin{tabular}{llrll}
+\toprule
+Method & Role & Macro subject AUC & Subject $95\%$ CI & Above chance? \\
+\midrule
+z-scoring        & primary            & 0.435961 & $[0.359602, 0.509338]$ & No \\
+mean subtraction & primary comparator & 0.392153 & $[0.310697, 0.476258]$ & No \\
+absolute         & secondary comparator & 0.367875 & $[0.286590, 0.456725]$ & No \\
+\midrule
+\multicolumn{5}{l}{Primary $\Delta$AUC (z-scoring $-$ mean subtraction): mean $+0.043807$, $95\%$ CI $[-0.076359, +0.175233]$ (includes zero).}\\
+\multicolumn{5}{l}{Secondary $\Delta$AUC (z-scoring $-$ absolute): mean $+0.068086$, $95\%$ CI $[-0.060173, +0.190715]$ (includes zero).}\\
 \bottomrule
 \end{tabular}}
 \end{table}
 
-The negative controls were also favorable for the exploratory classifiers.
-For MAT z-scored L2 logistic regression, observed ROC-AUC was 0.865995,
-the permutation mean was 0.508327, and empirical p = 0.000999. For STEW
-z-scored linear SVM, observed ROC-AUC was 0.791896, the permutation mean
-was 0.500369, and empirical p = 0.000999.
-
 \begin{figure}[ht]
 \centering
-\begin{subfigure}{0.48\linewidth}
-\centering
-\includegraphics[width=\linewidth]{../../results/theory_validation/figures/roc_curves_mat.png}
-\caption{MAT ROC curves}
-\end{subfigure}
-\begin{subfigure}{0.48\linewidth}
-\centering
-\includegraphics[width=\linewidth]{../../results/theory_validation/figures/roc_curves_stew.png}
-\caption{STEW ROC curves}
-\end{subfigure}
-\caption{Exploratory LOSO ROC curves from the executed theory-validation pipeline.}
-\label{fig:roc}
+\includegraphics[width=0.95\linewidth]{../figures/figure_neg_design_flow.png}
+\caption{Sequential hypothesis-control design. Two development datasets (MAT,
+STEW) yield strong within-dataset decoding; the predeclared MAT$\rightarrow$STEW
+mean-subtraction transport fails below chance; a post-hoc z-scoring observation
+generates a single hypothesis that is frozen and tested exactly once on
+untouched COG-BCI, where it also fails below chance.}
+\label{fig:flow}
 \end{figure}
 
-\subsection{Calibration-Duration Curve}
-
-The MAT calibration-duration curve showed a maximum valid ROC-AUC of
-0.876133 for z-scored L2 logistic regression. Under the preregistered
-plateau definition, the first duration within 0.01 ROC-AUC of the maximum
-was 51 seconds, with plateau ROC-AUC = 0.876133. Durations from 77 seconds
-onward were not run because too few post-calibration resting windows remained
-for valid subject-level scoring in all subjects.
-
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.76\linewidth]{../../results/theory_validation/figures/calibration_duration_curve_mat.png}
-\caption{MAT calibration-duration curve from the executed fixed-C LOSO
-pipeline. The observed plateau occurred at 51 seconds by the rule
-``first duration within 0.01 ROC-AUC of the maximum valid ROC-AUC.''}
-\label{fig:duration}
+\includegraphics[width=0.92\linewidth]{../figures/figure_neg_within_domain_auc.png}
+\caption{Within-domain macro subject-level ROC-AUC by calibration mode for MAT
+(left) and STEW (right). Error bars are subject-bootstrap $95\%$ CIs; the dashed
+line marks chance (0.5). Mean-subtraction permutation $p = 0.004975$ in both
+datasets (200 permutations).}
+\label{fig:within}
 \end{figure}
 
-\subsection{Feature-Direction Stability Was Not Demonstrated}
-
-The coefficient-direction analysis did not support a stable shared signed
-feature axis between MAT and STEW. For the frozen z-scored L2 logistic
-model, the MAT--STEW coefficient correlation was $r = 0.0136403$ with
-$p = 0.847975$. Across all tested calibration/model combinations, Pearson
-correlations ranged from -0.0415691 to 0.0734667 and none were significant
-(Table~\ref{tab:direction}). This result directly rules out a manuscript
-claim that the current analyses identified an invariant universal axis.
-
-\begin{table}[ht]
-\centering
-\caption{MAT--STEW coefficient-direction stability across exploratory configurations.}
-\label{tab:direction}
-\small
-\begin{tabular}{llrr}
-\toprule
-Calibration & Model & Pearson $r$ & p-value \\
-\midrule
-absolute & L2 logistic & -0.005644 & 0.936778 \\
-absolute & linear SVM & -0.041569 & 0.558922 \\
-mean subtraction & L2 logistic & 0.073467 & 0.301201 \\
-mean subtraction & linear SVM & -0.016498 & 0.816643 \\
-z-score & L2 logistic & 0.013640 & 0.847975 \\
-z-score & linear SVM & 0.046750 & 0.510952 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.76\linewidth]{../../results/theory_validation/figures/effect_direction_stability.png}
-\caption{Coefficient-direction stability between MAT and STEW. All
-correlations were near zero and non-significant, including the frozen
-z-scored L2 logistic model.}
-\label{fig:direction}
+\includegraphics[width=0.6\linewidth]{../figures/figure_neg_mat_to_stew.png}
+\caption{MAT$\rightarrow$STEW exploratory transport. The predeclared candidate
+(mean subtraction) is below chance; only the post-hoc z-scoring diagnostic
+exceeds chance. Error bars are subject-bootstrap $95\%$ CIs.}
+\label{fig:transport}
 \end{figure}
 
-\subsection{Frozen DS007262 Graded Transfer Failed}
-
-The DS007262 confirmatory test applied the frozen MAT/STEW-trained model
-without retraining on DS007262. All 18 released subjects were readable, and
-1,134 non-tutorial graded task trials were scored. The available event files
-contained seven ordinal levels, not eight, with 162 trials per level.
-
-The primary confirmatory result was a failure under the locked rules
-(Table~\ref{tab:ds}). The subject-level Spearman correlation between frozen
-decision score and ordinal workload level was
-$\rho = -0.0176745$ with two-sided $p = 0.844270$ and one-sided positive
-monotonicity $p = 0.577865$. The trial-level Spearman correlation was also
-negative and non-significant ($\rho = -0.0146273$, one-sided
-$p = 0.688660$). Per-subject correlations had mean $\rho = -0.0595238$,
-median $\rho = 0$, and 8 of 18 subjects showed positive correlations.
-
-\begin{table}[ht]
-\centering
-\caption{Frozen DS007262 graded workload confirmatory result.}
-\label{tab:ds}
-\small
-\adjustbox{max width=\textwidth}{%
-\begin{tabular}{lrrrrrr}
-\toprule
-Status & N subjects & N trials & Levels & Subject-level $\rho$ & One-sided p & Trial-level $\rho$ \\
-\midrule
-Failure & 18 & 1134 & 7 & -0.0176745 & 0.577865 & -0.0146273 \\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-\begin{table}[ht]
-\centering
-\caption{DS007262 frozen score summary by available ordinal workload level.}
-\label{tab:dslevels}
-\small
-\begin{tabular}{lrrrr}
-\toprule
-Difficulty range & Level & Mean score & Median score & N trials \\
-\midrule
-0.6--1.5 & 1 & -1.91867 & -2.05471 & 162 \\
-1.5--2.4 & 2 & -2.55800 & -2.17073 & 162 \\
-2.4--3.3 & 3 & -3.23046 & -2.59551 & 162 \\
-3.3--4.2 & 4 & -2.65596 & -3.08935 & 162 \\
-4.2--5.1 & 5 & -3.40334 & -2.73853 & 162 \\
-5.1--6.0 & 6 & -2.82036 & -2.62951 & 162 \\
-6.0--6.9 & 7 & -2.44009 & -2.35241 & 162 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.72\linewidth]{../../results/ds007262_confirmatory/figures/ds007262_level_curve.png}
-\caption{Frozen DS007262 graded workload scores. The fitted exploratory
-MAT/STEW model did not produce a positive monotonic score increase across
-the available DS007262 difficulty levels.}
-\label{fig:ds}
+\includegraphics[width=0.95\linewidth]{../figures/figure_neg_cogbci_oneshot.png}
+\caption{COG-BCI one-shot prospective test. Left: macro subject-level ROC-AUC by
+calibration mode (all below chance). Right: the primary paired contrast
+(z-scoring $-$ mean subtraction) with $95\%$ CI including zero. Error bars are
+subject-bootstrap $95\%$ CIs; dashed lines mark chance (left) and zero (right).}
+\label{fig:cogbci}
 \end{figure}
 
 \section{Discussion}
 
-\subsection{What the Verified Analyses Support}
+The principal finding is methodological: strong within-domain EEG workload
+decoding did \textbf{not} imply transportability. Mean-subtraction calibration
+decoded workload above chance within MAT (0.880) and within STEW (0.840), with
+permutation $p \approx 0.005$ in each dataset, yet the predeclared
+MAT$\rightarrow$STEW transport of that same calibrated pipeline fell below
+chance (0.448). A post-hoc z-scoring observation that looked promising on STEW
+(0.683) did not survive a single honest prospective test on untouched COG-BCI,
+where every calibration mode transported below chance and the z-scoring
+advantage over mean subtraction was statistically indistinguishable from zero.
+High LOSO accuracy inside a dataset is thus not evidence of device/task
+generalization.
 
-The verified analyses support a limited but useful conclusion: subject-level
-baseline z-scoring improved exploratory workload decoding in MAT and STEW
-relative to absolute features and mean subtraction. The effect was strongest
-in MAT and was also present in STEW. Negative controls showed that the
-observed out-of-fold scores were associated with labels in the exploratory
-datasets.
+We make no neural-mechanism claim. The features that drive within-dataset
+decoding (band ratios, Hjorth parameters, spectral entropy) are not interpreted
+physiologically, and no source-localization, anatomical-generator, or coupling
+analysis was performed. Task, device, reference montage, amplitude units, and
+cohort all differ across the three datasets; we treat these as plausible,
+non-exclusive contributors to the transport failure, \textbf{not} as proven
+causes, and the present analyses do not adjudicate among them. Below-chance
+transport may reflect an anti-aligned decision geometry across domains, but we
+do not interpret it mechanistically.
 
-The analyses do not support a stronger claim that the model recovered a
-universal or invariant workload axis. The coefficient-direction correlations
-between MAT and STEW were near zero. Most importantly, the frozen DS007262
-graded test failed the prespecified monotonicity criterion. A model can
-therefore classify rest-versus-workload labels in exploratory datasets while
-still failing to rank graded workload levels in an external dataset.
-
-\subsection{Interpretation of the Baseline-Relative Workload Transfer Hypothesis}
-
-The Baseline-Relative Workload Transfer Hypothesis was partly supported and
-partly falsified. The exploratory part was supported: baseline-relative
-z-scoring improved LOSO decoding in MAT and STEW. The confirmatory transfer
-part was not supported: the frozen model did not produce a positive monotonic
-relationship with DS007262 difficulty. The correct interpretation is not that
-baseline-relative calibration is useless, but that the current implementation
-does not establish graded cross-dataset transfer.
-
-Several non-exclusive explanations are compatible with the failure, but the
-present analyses do not adjudicate among them. DS007262 differs from MAT and
-STEW in task structure, event timing, difficulty design, and recording
-context. The channel intersection may omit useful electrodes. Rest-versus-task
-classification may also differ from ranking multiple arithmetic difficulty
-levels. These are methodological boundary conditions, not verified
-neurobiological mechanisms.
-
-\subsection{Resting Phenotyping}
-
-Exploratory resting EEG predictors should not be treated as a validated
-baseline phenotype. The prior audit found that no MAT resting feature
-survived FDR correction at $q = 0.05$ across the tested predictors, and the
-resting-screen model did not establish a reliable subject-level prediction
-rule. Resting EEG may still be useful for calibration, as shown by the
-z-scoring results, but the current repository does not support screening
-participants or explaining low classifiability by a specific resting-state
-biomarker.
+The contribution is the discipline of the test, not a positive result. We froze
+the pipeline before the prospective evaluation, controlled leakage by fitting
+only on the source dataset and calibrating from unlabeled baseline segments,
+restricted transport to scale/offset-invariant features given undocumented STEW
+units, harmonized the sampling representation transparently, and executed the
+prospective test exactly once under checksum locks. Honest prospective
+falsification of a post-hoc rescue is informative for reproducible BCI
+methodology: it bounds what subject-baseline calibration can be expected to do
+across heterogeneous domains.
 
 \subsection{Limitations}
 
-First, MAT and STEW were used for exploratory model selection and should not
-be interpreted as independent confirmation. Second, DS007262 provided only
-seven non-tutorial difficulty ranges in the analyzed event files, although
-the dataset is described as an 8-level arithmetic task. The analysis reported
-the available levels rather than relabeling or imputing an absent level.
-Third, the negative-control permutations were applied to nested out-of-fold
-scores and did not retrain models for every null draw. Fourth, coefficient
-stability was tested only at the sensor-feature level; no source localization
-or anatomical inference was performed. Fifth, unverified oscillatory coupling
-analyses were removed because they were not part of the executed confirmatory
-evidence.
+First, the cross-domain shift is large and confounded: device and task differ
+simultaneously between MAT, STEW, and COG-BCI, so the two cannot be separated.
+Second, there is a single prospective target (COG-BCI), tested once by design;
+this maximizes inferential honesty but limits breadth. Third, the model and
+feature family are fixed (one linear classifier; one feature set; eight
+harmonized channels), so the result speaks to this pipeline, not to all possible
+decoders. Fourth, STEW is an exploratory, non-comparable sensitivity dataset
+with undocumented amplitude units, not a strict replication. Fifth, the analysis
+was restricted to MATB-difficult versus eyes-open rest; N-back, other MATB
+levels, eyes-closed rest, and COG-BCI sessions S2/S3 were prespecified out of
+scope and contribute no results. Sixth, no permutation test was computed for the
+COG-BCI run (outside the frozen script's scope); it is not needed because the
+primary endpoint was already below chance. Finally, the study supports no
+clinical, deployment, diagnostic, real-time, mechanistic, anatomical, or causal
+claim, and reports no estimate of publication likelihood.
 
 \section{Conclusion}
 
-Baseline-relative EEG calibration improved exploratory rest-versus-workload
-decoding in MAT and STEW, with z-scored models achieving ROC-AUC values of
-0.865995 and 0.791896 in the best exploratory configurations. However, the
-feature-direction analysis did not demonstrate a stable shared signed axis,
-and the frozen DS007262 graded external test failed
-($\rho = -0.0176745$, one-sided $p = 0.577865$). The manuscript therefore
-supports baseline-relative calibration as an exploratory method, but it does
-not support claims of invariant workload transfer or universal EEG workload
-geometry.
+Across three provenance-distinct EEG datasets, baseline-relative processing
+supported \textbf{within-domain} workload decoding (mean-subtraction macro
+subject AUC 0.880 within MAT and 0.840 within STEW, each $p \approx 0.005$), but
+neither mean subtraction nor the prospectively tested z-scoring supported
+\textbf{cross-domain} transport of the MAT-trained decoder. The predeclared
+MAT$\rightarrow$STEW mean-subtraction transport failed below chance (0.448), and
+the frozen one-shot COG-BCI prospective test of the post-hoc z-scoring
+hypothesis also failed below chance (0.436; primary $\Delta$AUC CI includes
+zero). Under the specific task and device shifts tested here, strong
+within-dataset decoding did not establish a transportable workload decoder. We
+report this as a rigorous negative transport/reproducibility result.
 
 \section{Data and Code Availability}
 
 The original datasets are available from PhysioNet EEGMAT
-\cite{physionet_eegmat}, STEW \cite{stew_dataset}, and OpenNeuro DS007262
-\cite{openneuro_ds007262}. The analysis code, frozen configuration, and
-generated validation outputs are stored in the project repository. The key
-executed summaries are \texttt{THEORY\_VALIDATION\_RESULTS.md} and
-\texttt{results/ds007262\_confirmatory/DS007262\_CONFIRMATORY\_RESULTS.md}.
+\cite{physionet_eegmat}, IEEE DataPort STEW \cite{stew_dataset}, and the COG-BCI
+database \cite{hinss2023}. Raw EEG signals are not redistributed here. The
+analysis code, frozen configurations, checksum manifests, and committed
+result-summary files are stored in the project repository; the decisive
+summaries are \texttt{MAT\_MEAN\_SUBTRACTION\_SUBJECT\_LEVEL\_RESULTS.md},
+\texttt{MAT\_MACRO\_SUBJECT\_NULL\_RESULTS.md},
+\texttt{STEW\_EXPLORATORY\_SENSITIVITY\_RESULTS.md},
+\texttt{MAT\_TO\_STEW\_EXPLORATORY\_TRANSFER\_RESULTS.md},
+\texttt{COG\_BCI\_ONE\_SHOT\_PROSPECTIVE\_RESULTS.md}, and the artifacts under
+\texttt{results/cog\_bci\_one\_shot/} (including \texttt{RUN\_MARKER.json} and
+\texttt{config\_and\_script\_checksums.json}).
 
 \section{Ethics Statement}
 
 This work is a secondary analysis of publicly available, de-identified EEG
-datasets. No new human-subject data were collected. The original datasets
-were collected under their respective ethics approvals and consent
-procedures. The present work is intended for computational neuroscience and
-methodological validation, not clinical diagnosis or individual assessment.
+datasets. No new human-subject data were collected. The original datasets were
+collected under their respective ethics approvals and consent procedures. The
+present work is intended for computational and methodological research, not
+clinical diagnosis or individual assessment.
 
 \section{Author Contributions}
 
-Abhijay Gangarapu and Arush Ravipati contributed equally to the conception,
+Arush Ravipati and Abhijay Gangarapu contributed equally to the conception,
 analysis, interpretation, and manuscript preparation for this study.
 
 \section{Conflict of Interest}
@@ -479,8 +567,8 @@ construed as a potential conflict of interest.
 
 \section{Acknowledgments}
 
-The authors thank the creators of the PhysioNet EEGMAT, STEW, and OpenNeuro
-DS007262 datasets for making their data publicly available.
+The authors thank the creators of the PhysioNet EEGMAT, IEEE DataPort STEW, and
+COG-BCI datasets for making their data publicly available.
 
 \input{references}
 
