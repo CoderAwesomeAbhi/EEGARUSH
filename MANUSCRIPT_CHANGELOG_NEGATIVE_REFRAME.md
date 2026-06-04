@@ -100,3 +100,15 @@ new task/session/dataset, or rescue analysis was performed.
 - Built with `tectonic main.tex` (repo has no `pdflatex`); PDF produced at
   `paper/tex/main.pdf`. No undefined references or citations; only cosmetic
   overfull-hbox warnings. Scientific results unchanged during LaTeX fixes.
+
+## Pre-merge cleanup (PR #17)
+
+- Strict pre-merge verification found a stale, **uncited**
+  `\bibitem{openneuro_ds007262}` (OpenNeuro DS007262) in `references.tex` that
+  still rendered in the compiled PDF reference list because the bibliography is
+  manually typeset. The single bibitem was removed and `main.pdf` recompiled
+  with the same Tectonic workflow. Post-fix checks confirm `DS007262` and
+  `OpenNeuro` are absent from `main.tex`, `references.tex`, and the rendered PDF
+  text; no undefined citations/references; all four tables and four figures
+  still render and are referenced. This was a leftover citation only and was
+  never part of the scientific evidence.

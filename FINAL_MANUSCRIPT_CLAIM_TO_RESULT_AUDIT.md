@@ -67,10 +67,22 @@ confirms each forbidden claim is **ABSENT**:
 | gamma-mechanism | ABSENT | "gamma" appears only as "no-gamma … gamma bands were removed" |
 | superiority of mean subtraction over absolute | ABSENT | reported as null (paired CIs include zero) |
 | "with more data/tuning it would transfer" speculation | ABSENT | none present |
-| DS007262 confirmation / old invariant-axis / z-centric narrative | ABSENT | DS007262 fully removed from manuscript |
+| DS007262 confirmation / old invariant-axis / z-centric narrative | ABSENT | DS007262 fully removed from manuscript (see §4 note) |
 | publication-acceptance-likelihood language | ABSENT | none present |
 
-## 4. Verdict
+## 4. Pre-merge verification note (DS007262 bibliography entry)
+
+During strict pre-merge read-only verification of PR #17, a single stale,
+**uncited** `\bibitem{openneuro_ds007262}` (OpenNeuro DS007262) was detected in
+`paper/tex/references.tex`. Although never `\cite`d in `main.tex`, the manuscript
+uses a manually typeset `thebibliography`, so the entry still rendered in the
+compiled PDF reference list. It was removed before merge and the PDF recompiled;
+`DS007262` and `OpenNeuro` are now confirmed **absent** from `paper/tex/main.tex`,
+`paper/tex/references.tex`, and the extracted/rendered text of
+`paper/tex/main.pdf`. This entry was a leftover citation only and was **never**
+part of the scientific evidence base for this negative-methods study.
+
+## 5. Verdict
 
 Every major manuscript claim maps to a committed, executed result with exact
 provenance; all values match the integrity-audited sources; all forbidden
