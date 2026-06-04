@@ -133,3 +133,21 @@ Result of the exploratory within-STEW sensitivity + MAT→STEW transport stage
   dataset is now sanctioned (`UNTOUCHED_DATASET_ELIGIBILITY_SCREEN.md`); **no
   signal/label download or analysis** of any candidate is permitted until a
   dataset is selected and a fresh provenance audit passes.
+
+### COG-BCI prospective target (conditionally selected, pre-download)
+
+- **COG-BCI (Hinss et al. 2023; Zenodo 10.5281/zenodo.6874128)** is selected as the
+  single prospective evaluation dataset, **conditionally** — metadata eligibility
+  passed (`COG_BCI_METADATA_ELIGIBILITY_AUDIT.md` →
+  `COG_BCI_METADATA_ELIGIBLE_FOR_PRETEST_LOCK`), but selection remains pending a
+  later **raw-data provenance audit** that must pass before any modeling.
+- **No COG-BCI signal files may be downloaded or analyzed** until the one-shot test
+  protocol (`COG_BCI_ONE_SHOT_PROSPECTIVE_TEST_PROTOCOL.md`) is committed and the
+  provenance audit passes.
+- The **primary paradigm is predeclared as MATB** (highest level = MATB
+  **difficult**), chosen by construct match, **not** after outcomes.
+- **N-back cannot influence the primary verdict** — it is secondary/exploratory only.
+- Primary endpoint: macro subject-level ROC-AUC for **z-scoring** on **eyes-open
+  rest vs MATB-difficult**; primary comparison z-scoring − mean subtraction (paired
+  subject-bootstrap CI). Eyes-closed rest is excluded from the primary model.
+- Pre-download decision: `COG_BCI_PRE_DOWNLOAD_DECISION.md`.

@@ -104,6 +104,24 @@ detail. Summary:
 - Still binding: do not edit `main.tex`; do not re-analyze DS007262; do not commit
   anything under `data/raw/`; do not use the MONSTER/HF STEW bundle for modeling.
 
+## COG-BCI Prospective Target (pre-download lock)
+
+- **COG-BCI (Hinss et al. 2023)** is the conditionally-selected single prospective
+  test dataset. Metadata eligibility passed; selection is pending a later raw-data
+  provenance audit. See `COG_BCI_METADATA_ELIGIBILITY_AUDIT.md`,
+  `COG_BCI_ONE_SHOT_PROSPECTIVE_TEST_PROTOCOL.md`, `COG_BCI_PRE_DOWNLOAD_DECISION.md`.
+- **Do NOT download or analyze any COG-BCI signal/outcome files** until the one-shot
+  protocol is committed AND a fresh provenance audit passes.
+- **Primary paradigm is predeclared = MATB** (highest level = MATB **difficult**),
+  chosen by construct match, not after outcomes. **N-back cannot influence the
+  primary verdict** (secondary/exploratory only).
+- Primary baseline = **eyes-open rest only** (eyes-closed excluded from the primary
+  model). Primary endpoint = macro subject-level ROC-AUC for **z-scoring** on
+  eyes-open-rest vs MATB-difficult; primary comparison = z-scoring − mean
+  subtraction (paired subject-bootstrap CI). Locked features = the frozen 96;
+  locked channels = the 8 harmonized (all documented in COG-BCI). One-shot only:
+  no retuning/task-switching/channel-expansion/feature-reselection/endpoint change.
+
 ## Automatic GitHub Sync Policy
 
 - After a completed and scientifically valid task, automatically sync safe outputs
